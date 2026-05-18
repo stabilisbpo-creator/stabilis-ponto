@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro de Ponto - Stabilis BPO</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f0f4f8;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    width: 100%;
+    max-width: 420px;
+    overflow: hidden;
+  }
+  .header {
+    background: #1a365d;
+    color: #fff;
+    padding: 1.5rem 1.75rem 1.25rem;
+  }
+  .header h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+  .header p { font-size: 13px; opacity: 0.7; margin-top: 4px; }
+  .clock {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    margin-top: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .date-str { font-size: 13px; opacity: 0.6; margin-top: 2px; }
+  .body { padding: 1.5rem 1.75rem; }
+  .field { margin-bottom: 1rem; }
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #4a5568;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .funcionario-box {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid #c3dafe;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a365d;
+    background: #ebf4ff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .funcionario-box i { font-size: 18px; opacity: 0.7; }
+  .sem-funcionario {
+    padding: 10px 12px;
+    border: 1.5px dashed #fc8181;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #9b2c2c;
+    background: #fff5f5;
+  }
+  textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 15px;
+    color: #1a202c;
+    background: #f7fafc;
+    transition: border-color 0.2s;
+    font-family: inherit;
+    resize: none;
+    height: 72px;
+  }
+  textarea:focus { outline: none; border-color: #1a365d; background: #fff; }
+  .tipo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .tipo-btn {
+    padding: 14px 10px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f7fafc;
+    font-size: 14px;
+    font-weight: 500;
+    color: #4a5568;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .tipo-btn:hover { border-color: #1a365d; color: #1a365d; }
+  .tipo-btn.entrada.selected { background: #f0fff4; border-color: #276749; color: #276749; font-weight: 600; }
+  .tipo-btn.saida.selected { background: #fff5f5; border-color: #9b2c2c; color: #9b2c2c; font-weight: 600; }
+  .submit-btn {
+    width: 100%;
+    padding: 13px;
+    background: #1a365d;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .submit-btn:hover { background: #2d4e8a; }
+  .submit-btn:disabled { background: #a0aec0; cursor: not-allowed; }
+  .status-msg {
+    margin-top: 1rem;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    text-align: center;
+    display: none;
+  }
+  .status-msg.ok { background: #f0fff4; color: #276749; border: 1px solid #9ae6b4; display: block; }
+  .status-msg.erro { background: #fff5f5; color: #9b2c2c; border: 1px solid #fc8181; display: block; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <h1><i class="ti ti-clock"></i> Registro de Ponto</h1>
+    <p>Stabilis BPO</p>
+    <div class="clock" id="clock">--:--:--</div>
+    <div class="date-str" id="datestr">carregando...</div>
+  </div>
+  <div class="body">
+    <div class="field">
+      <label><i class="ti ti-user"></i> Funcionário</label>
+      <div id="funcionario-display"></div>
+    </div>
+    <div class="field">
+      <label>Tipo de registro</label>
+      <div class="tipo-grid">
+        <div class="tipo-btn entrada" data-tipo="Entrada" onclick="selecionarTipo(this)">
+          <i class="ti ti-login"></i> Entrada
+        </div>
+        <div class="tipo-btn saida" data-tipo="Saída" onclick="selecionarTipo(this)">
+          <i class="ti ti-logout"></i> Saída
+        </div>
+      </div>
+    </div>
+    <div class="field" id="campo-justificativa" style="display:none;">
+      <label>Justificativa / Observação</label>
+      <textarea id="justificativa" placeholder="Ex: saindo mais cedo por consulta médica..."></textarea>
+    </div>
+    <button class="submit-btn" id="btnRegistrar" onclick="registrar()">
+      <i class="ti ti-check"></i> Registrar ponto
+    </button>
+    <div class="status-msg" id="statusMsg"></div>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxlzJUeoLcNCxV34E5XB27LU0pIBKfI7Vs6HSvDbo5bWNgjebHhOb8F7NhEx7hMDIiL_Q/exec";
+let tipoSelecionado = "";
+
+const params = new URLSearchParams(window.location.search);
+const nomeFuncionario = params.get("funcionario") || "";
+
+const displayEl = document.getElementById("funcionario-display");
+if (nomeFuncionario) {
+  displayEl.innerHTML = `<div class="funcionario-box"><i class="ti ti-user-check"></i>${nomeFuncionario}</div>`;
+} else {
+  displayEl.innerHTML = `<div class="sem-funcionario">⚠️ Funcionário não identificado. Acesse pelo link correto fornecido pela empresa.</div>`;
+  document.getElementById("btnRegistrar").disabled = true;
+}
+
+function atualizarRelogio() {
+  const agora = new Date();
+  document.getElementById("clock").textContent = agora.toLocaleTimeString("pt-BR");
+  const dias = ["domingo","segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado"];
+  const meses = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+  document.getElementById("datestr").textContent =
+    dias[agora.getDay()] + ", " + agora.getDate() + " de " + meses[agora.getMonth()] + " de " + agora.getFullYear();
+}
+setInterval(atualizarRelogio, 1000);
+atualizarRelogio();
+
+function selecionarTipo(el) {
+  document.querySelectorAll(".tipo-btn").forEach(b => b.classList.remove("selected"));
+  el.classList.add("selected");
+  tipoSelecionado = el.getAttribute("data-tipo");
+  document.getElementById("campo-justificativa").style.display = "block";
+}
+
+async function registrar() {
+  const justificativa = document.getElementById("justificativa").value;
+  const btn = document.getElementById("btnRegistrar");
+  const msg = document.getElementById("statusMsg");
+
+  if (!tipoSelecionado) { mostrarStatus("erro", "Selecione o tipo de registro."); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader"></i> Enviando...';
+  msg.className = "status-msg";
+  msg.style.display = "none";
+
+  const agora = new Date();
+  const payload = {
+    funcionario: nomeFuncionario,
+    tipo: tipoSelecionado,
+    data: agora.toLocaleDateString("pt-BR"),
+    hora: agora.toLocaleTimeString("pt-BR"),
+    justificativa
+  };
+
+  try {
+    await fetch(SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    mostrarStatus("ok", "✓ Ponto registrado com sucesso às " + payload.hora);
+    document.querySelectorAll(".tipo-btn").forEach(b => b.classList.remove("selected"));
+    document.getElementById("justificativa").value = "";
+    document.getElementById("campo-justificativa").style.display = "none";
+    tipoSelecionado = "";
+  } catch(e) {
+    mostrarStatus("erro", "Erro ao registrar. Verifique sua conexão.");
+  }
+  btn.disabled = false;
+  btn.innerHTML = '<i class="ti ti-check"></i> Registrar ponto';
+}
+
+function mostrarStatus(tipo, texto) {
+  const msg = document.getElementById("statusMsg");
+  msg.className = "status-msg " + tipo;
+  msg.textContent = texto;
+}
+</script>
+</body>
+</html>
