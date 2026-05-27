@@ -181,10 +181,10 @@ function getDadosPainel(dataInicioStr, dataFimStr) {
     const ultimoRegistroHora = registros[registros.length - 1] ? registros[registros.length - 1].hora : "-";
 
     porFuncionario[func].dias.push({
-      data,
+      data: normalizeData(data),
       diaSemana: nomeDiaSemana(diaSemana),
-      entrada: primeiroRegistro,
-      saida: ultimoRegistroHora,
+      entrada: normalizeHora(primeiroRegistro),
+      saida: normalizeHora(ultimoRegistroHora),
       trabalhado: minutosTrabalhados,
       esperado: minutosEsperados,
       saldo,
