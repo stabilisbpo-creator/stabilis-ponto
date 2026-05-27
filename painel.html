@@ -10,9 +10,7 @@
   :root {
     --navy: #1a365d;
     --navy-light: #2d4e8a;
-    --navy-faint: #ebf4ff;
     --gold: #c9a84c;
-    --gold-light: #fdf6e3;
     --green: #276749;
     --green-bg: #f0fff4;
     --green-border: #9ae6b4;
@@ -28,237 +26,126 @@
     --mono: 'DM Mono', monospace;
     --sans: 'DM Sans', sans-serif;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--sans); background: #f0f4f8; min-height: 100vh; color: var(--gray-800); }
 
-  body {
-    font-family: var(--sans);
-    background: #f0f4f8;
-    min-height: 100vh;
-    color: var(--gray-800);
-  }
-
-  /* ── HEADER ── */
+  /* HEADER */
   .header {
-    background: var(--navy);
-    color: #fff;
+    background: var(--navy); color: #fff;
     padding: 1.25rem 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
   }
-  .header-left h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+  .header-left h1 { font-size: 18px; font-weight: 700; }
   .header-left p { font-size: 12px; opacity: 0.6; margin-top: 2px; }
   .header-badge {
-    background: rgba(201,168,76,0.2);
-    border: 1px solid rgba(201,168,76,0.4);
-    color: var(--gold);
-    font-size: 11px;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 20px;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
+    background: rgba(201,168,76,0.2); border: 1px solid rgba(201,168,76,0.4);
+    color: var(--gold); font-size: 11px; font-weight: 600;
+    padding: 4px 10px; border-radius: 20px; letter-spacing: 0.5px; text-transform: uppercase;
   }
 
-  /* ── FILTROS ── */
+  /* FILTROS */
   .filtros-bar {
-    background: #fff;
-    border-bottom: 1px solid var(--gray-200);
+    background: #fff; border-bottom: 1px solid var(--gray-200);
     padding: 1rem 2rem;
-    display: flex;
-    align-items: flex-end;
-    gap: 1rem;
-    flex-wrap: wrap;
+    display: flex; align-items: flex-end; gap: 1rem; flex-wrap: wrap;
   }
   .filtro-group { display: flex; flex-direction: column; gap: 4px; }
   .filtro-group label { font-size: 11px; font-weight: 600; color: var(--gray-600); text-transform: uppercase; letter-spacing: 0.5px; }
   .filtro-group input[type="date"] {
-    padding: 8px 12px;
-    border: 1.5px solid var(--gray-200);
-    border-radius: 8px;
-    font-size: 14px;
-    font-family: var(--sans);
-    color: var(--gray-800);
-    background: var(--gray-50);
-    cursor: pointer;
-    transition: border-color 0.15s;
+    padding: 8px 12px; border: 1.5px solid var(--gray-200); border-radius: 8px;
+    font-size: 14px; font-family: var(--sans); color: var(--gray-800); background: var(--gray-50);
+    cursor: pointer; transition: border-color 0.15s;
   }
   .filtro-group input[type="date"]:focus { outline: none; border-color: var(--navy); background: #fff; }
-
   .btn-filtrar {
-    padding: 8px 20px;
-    background: var(--navy);
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: var(--sans);
-    transition: background 0.15s;
-    align-self: flex-end;
+    padding: 8px 20px; background: var(--navy); color: #fff; border: none;
+    border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: var(--sans); transition: background 0.15s; align-self: flex-end;
   }
   .btn-filtrar:hover { background: var(--navy-light); }
-
   .btn-limpar {
-    padding: 8px 16px;
-    background: transparent;
-    color: var(--gray-600);
-    border: 1.5px solid var(--gray-200);
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    font-family: var(--sans);
-    transition: all 0.15s;
-    align-self: flex-end;
+    padding: 8px 16px; background: transparent; color: var(--gray-600);
+    border: 1.5px solid var(--gray-200); border-radius: 8px; font-size: 13px;
+    font-weight: 500; cursor: pointer; font-family: var(--sans);
+    transition: all 0.15s; align-self: flex-end;
   }
   .btn-limpar:hover { border-color: var(--gray-400); color: var(--gray-800); }
+  .periodo-label { font-size: 12px; color: var(--gray-400); align-self: flex-end; padding-bottom: 10px; }
 
-  .periodo-label {
-    font-size: 12px;
-    color: var(--gray-400);
-    align-self: flex-end;
-    padding-bottom: 10px;
-  }
+  /* CONTEÚDO */
+  .conteudo { padding: 1.5rem 2rem; max-width: 100%; margin: 0 auto; }
 
-  /* ── CONTEÚDO ── */
-  .conteudo {
-    padding: 1.5rem 2rem;
-    max-width: 1100px;
-    margin: 0 auto;
-  }
-
-  /* ── LOADING / ERRO ── */
-  .estado {
-    text-align: center;
-    padding: 4rem 2rem;
-    color: var(--gray-400);
-    font-size: 15px;
-  }
+  /* LOADING */
+  .estado { text-align: center; padding: 4rem 2rem; color: var(--gray-400); font-size: 15px; }
   .estado .spinner {
-    width: 32px; height: 32px;
-    border: 3px solid var(--gray-200);
-    border-top-color: var(--navy);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto 1rem;
+    width: 32px; height: 32px; border: 3px solid var(--gray-200);
+    border-top-color: var(--navy); border-radius: 50%;
+    animation: spin 0.8s linear infinite; margin: 0 auto 1rem;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ── CARD FUNCIONÁRIO ── */
+  /* CARD FUNCIONÁRIO */
   .func-card {
-    background: #fff;
-    border-radius: 12px;
+    background: #fff; border-radius: 12px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    margin-bottom: 1.5rem;
-    overflow: hidden;
+    margin-bottom: 1.5rem; overflow: hidden;
     animation: fadeUp 0.3s ease both;
   }
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-
   .func-header {
-    background: var(--navy);
-    color: #fff;
+    background: var(--navy); color: #fff;
     padding: 1rem 1.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 0.75rem;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 0.75rem;
   }
-  .func-nome {
-    font-size: 16px;
-    font-weight: 700;
-    text-transform: capitalize;
-    letter-spacing: -0.2px;
-  }
-  .func-resumo {
-    display: flex;
-    gap: 1.5rem;
-    flex-wrap: wrap;
-  }
+  .func-nome { font-size: 16px; font-weight: 700; text-transform: capitalize; }
+  .func-resumo { display: flex; gap: 2rem; flex-wrap: wrap; }
   .resumo-item { text-align: right; }
   .resumo-item .label { font-size: 10px; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.5px; }
-  .resumo-item .valor {
-    font-family: var(--mono);
-    font-size: 16px;
-    font-weight: 500;
-    margin-top: 1px;
-  }
+  .resumo-item .valor { font-family: var(--mono); font-size: 16px; font-weight: 500; margin-top: 1px; }
   .valor.positivo { color: #6ee7b7; }
   .valor.negativo { color: #fca5a5; }
   .valor.neutro   { color: #e2e8f0; }
 
-  /* ── TABELA DE DIAS ── */
-  .tabela-wrap {
-    overflow-x: auto;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-  }
-  thead tr {
-    background: var(--gray-50);
-    border-bottom: 2px solid var(--gray-200);
-  }
+  /* TABELA */
+  .tabela-wrap { width: 100%; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+  col.col-data     { width: 110px; }
+  col.col-dia      { width: 50px; }
+  col.col-hora     { width: 100px; }
+  col.col-horas    { width: 110px; }
+  col.col-saldo    { width: 140px; }
+
+  thead tr { background: var(--gray-50); border-bottom: 2px solid var(--gray-200); }
   thead th {
-    padding: 10px 16px;
-    text-align: left;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--gray-600);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
+    padding: 10px 16px; text-align: left;
+    font-size: 11px; font-weight: 600; color: var(--gray-600);
+    text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
   }
-  tbody tr {
-    border-bottom: 1px solid var(--gray-100);
-    transition: background 0.1s;
-  }
+  tbody tr { border-bottom: 1px solid var(--gray-100); transition: background 0.1s; }
   tbody tr:last-child { border-bottom: none; }
   tbody tr:hover { background: var(--gray-50); }
-  tbody td {
-    padding: 10px 16px;
-    color: var(--gray-800);
-    white-space: nowrap;
-  }
+  tbody td { padding: 10px 16px; color: var(--gray-800); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-  .td-data { font-weight: 600; color: var(--navy); }
-  .td-dia  { color: var(--gray-400); font-size: 12px; }
-  .td-hora { font-family: var(--mono); font-size: 12px; }
+  .td-data  { font-weight: 600; color: var(--navy); }
+  .td-dia   { color: var(--gray-400); font-size: 12px; }
+  .td-hora  { font-family: var(--mono); font-size: 12px; }
   .td-horas { font-family: var(--mono); font-size: 13px; }
 
-  .saldo-pos { color: var(--green); font-weight: 600; font-family: var(--mono); }
-  .saldo-neg { color: var(--red);   font-weight: 600; font-family: var(--mono); }
+  .saldo-pos  { color: var(--green); font-weight: 600; font-family: var(--mono); }
+  .saldo-neg  { color: var(--red);   font-weight: 600; font-family: var(--mono); }
   .saldo-zero { color: var(--gray-400); font-family: var(--mono); }
 
   .badge-incompleto {
-    background: #fffbeb;
-    color: #744210;
-    border: 1px solid #f6ad55;
-    font-size: 10px;
-    font-weight: 600;
-    padding: 2px 7px;
-    border-radius: 20px;
-    margin-left: 6px;
-    vertical-align: middle;
+    background: #fffbeb; color: #744210; border: 1px solid #f6ad55;
+    font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px;
+    margin-left: 6px; vertical-align: middle;
   }
 
-  /* ── VAZIO ── */
-  .vazio {
-    text-align: center;
-    padding: 3rem;
-    color: var(--gray-400);
-    font-size: 14px;
-  }
+  .vazio { text-align: center; padding: 3rem; color: var(--gray-400); font-size: 14px; }
 
   @media (max-width: 640px) {
     .header, .filtros-bar, .conteudo { padding-left: 1rem; padding-right: 1rem; }
@@ -292,10 +179,7 @@
 </div>
 
 <div class="conteudo" id="conteudo">
-  <div class="estado">
-    <div class="spinner"></div>
-    Carregando dados...
-  </div>
+  <div class="estado"><div class="spinner"></div>Carregando dados...</div>
 </div>
 
 <script>
@@ -319,14 +203,39 @@ function limparFiltro() {
   buscarDados();
 }
 
+// ── Formata data vinda do servidor (pode ser objeto Date serializado ou string dd/MM/yyyy)
+function formatarData(val) {
+  if (!val || val === "-") return "-";
+  // Tenta como objeto Date serializado (ex: "Tue May 26 2026 00:00:00 GMT-0300...")
+  const d = new Date(val);
+  if (!isNaN(d.getTime())) {
+    return String(d.getDate()).padStart(2,"0") + "/" +
+           String(d.getMonth()+1).padStart(2,"0") + "/" +
+           d.getFullYear();
+  }
+  // Já está no formato dd/MM/yyyy
+  return val;
+}
+
+// ── Formata hora vinda do servidor (pode ser objeto Date de 1899 ou string HH:mm:ss)
+function formatarHora(val) {
+  if (!val || val === "-") return "-";
+  const d = new Date(val);
+  if (!isNaN(d.getTime())) {
+    return String(d.getHours()).padStart(2,"0") + ":" +
+           String(d.getMinutes()).padStart(2,"0") + ":" +
+           String(d.getSeconds()).padStart(2,"0");
+  }
+  return val;
+}
+
 function buscarDados() {
   const inicio = document.getElementById("dataInicio").value;
   const fim = document.getElementById("dataFim").value;
 
-  document.getElementById("conteudo").innerHTML = `
-    <div class="estado"><div class="spinner"></div>Carregando...</div>`;
+  document.getElementById("conteudo").innerHTML =
+    `<div class="estado"><div class="spinner"></div>Carregando...</div>`;
 
-  // Atualiza label de período
   const label = document.getElementById("periodoLabel");
   if (inicio && fim) {
     const di = new Date(inicio + "T00:00:00");
@@ -344,23 +253,9 @@ function buscarDados() {
     .then(r => r.json())
     .then(data => renderizar(data))
     .catch(() => {
-      document.getElementById("conteudo").innerHTML = `
-        <div class="estado">❌ Erro ao carregar dados. Verifique a conexão.</div>`;
+      document.getElementById("conteudo").innerHTML =
+        `<div class="estado">❌ Erro ao carregar dados. Verifique a conexão.</div>`;
     });
-}
-
-function formatarData(val) {
-  if (!val) return "-";
-  const d = new Date(val);
-  if (!isNaN(d)) return String(d.getDate()).padStart(2,"0") + "/" + String(d.getMonth()+1).padStart(2,"0") + "/" + d.getFullYear();
-  return val;
-}
-
-function formatarHora(val) {
-  if (!val) return "-";
-  const d = new Date(val);
-  if (!isNaN(d) && d.getFullYear() === 1899) return String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0") + ":" + String(d.getSeconds()).padStart(2,"0");
-  return val;
 }
 
 function renderizar(data) {
@@ -377,12 +272,15 @@ function renderizar(data) {
     const linhas = func.dias.map(dia => {
       const sc = dia.saldo > 0 ? "saldo-pos" : dia.saldo < 0 ? "saldo-neg" : "saldo-zero";
       const incompleto = dia.temIncompleto ? `<span class="badge-incompleto">⚠ incompleto</span>` : "";
+      const dataFmt   = formatarData(dia.data);
+      const entradaFmt = formatarHora(dia.entrada);
+      const saidaFmt   = formatarHora(dia.saida);
       return `
         <tr>
-          <td class="td-data">${formatarData(dia.data)}</td>
+          <td class="td-data">${dataFmt}</td>
           <td class="td-dia">${dia.diaSemana}</td>
-          <td class="td-hora">${formatarHora(dia.entrada)}</td>
-          <td class="td-hora">${formatarHora(dia.saida)}</td>
+          <td class="td-hora">${entradaFmt}</td>
+          <td class="td-hora">${saidaFmt}</td>
           <td class="td-horas">${minutosParaHora(dia.trabalhado)}</td>
           <td class="td-horas">${minutosParaHora(dia.esperado)}</td>
           <td class="${sc}">${formatarSaldo(dia.saldo)}${incompleto}</td>
@@ -410,6 +308,15 @@ function renderizar(data) {
         </div>
         <div class="tabela-wrap">
           <table>
+            <colgroup>
+              <col class="col-data">
+              <col class="col-dia">
+              <col class="col-hora">
+              <col class="col-hora">
+              <col class="col-horas">
+              <col class="col-horas">
+              <col class="col-saldo">
+            </colgroup>
             <thead>
               <tr>
                 <th>Data</th>
@@ -442,7 +349,6 @@ function formatarSaldo(min) {
   return (min >= 0 ? "+" : "") + minutosParaHora(min);
 }
 
-// Carrega ao abrir
 buscarDados();
 </script>
 </body>
