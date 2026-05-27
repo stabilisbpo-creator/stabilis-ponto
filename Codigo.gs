@@ -157,7 +157,7 @@ function getDadosPainel(dataInicioStr, dataFimStr) {
       while (j < registros.length && registros[j].tipo !== "Saída") j++;
       if (j < registros.length) {
         const saida = registros[j];
-        const diff = horaParaMinutos(saida.hora) - horaParaMinutos(entrada.hora) - ESCALA.intervalo;
+        const diff = horaParaMinutos(saida.hora) - horaParaMinutos(entrada.hora);
         if (!isNaN(diff)) minutosTrabalhados += diff;
         i = j + 1;
       } else {
@@ -170,7 +170,7 @@ function getDadosPainel(dataInicioStr, dataFimStr) {
     let minutosEsperados = 0;
     if (diaSemana !== 0 && diaSemana !== 6) {
       minutosEsperados = diaSemana === 5
-        ? horaParaMinutos(ESCALA.saidaSexta) - horaParaMinutos(ESCALA.entrada)        : horaParaMinutos(ESCALA.saidaSegQuinta) - horaParaMinutos(ESCALA.entrada) - ESCALA.intervalo;
+        ? horaParaMinutos(ESCALA.saidaSexta) - horaParaMinutos(ESCALA.entrada)        : horaParaMinutos(ESCALA.saidaSegQuinta) - horaParaMinutos(ESCALA.entrada);
     }
 
     const saldo = minutosTrabalhados - minutosEsperados;
@@ -259,7 +259,7 @@ function atualizarPainel() {
       while (j < registros.length && registros[j].tipo !== "Saída") j++;
       if (j < registros.length) {
         const saida = registros[j];
-        const diff = horaParaMinutos(saida.hora) - horaParaMinutos(entrada.hora) - ESCALA.intervalo;
+        const diff = horaParaMinutos(saida.hora) - horaParaMinutos(entrada.hora);
         if (!isNaN(diff)) minutosTrabalhados += diff;
         i = j + 1;
       } else { i++; }
@@ -270,7 +270,7 @@ function atualizarPainel() {
     let minutosEsperados = 0;
     if (diaSemana !== 0 && diaSemana !== 6) {
       minutosEsperados = diaSemana === 5
-        ? horaParaMinutos(ESCALA.saidaSexta) - horaParaMinutos(ESCALA.entrada)        : horaParaMinutos(ESCALA.saidaSegQuinta) - horaParaMinutos(ESCALA.entrada) - ESCALA.intervalo;
+        ? horaParaMinutos(ESCALA.saidaSexta) - horaParaMinutos(ESCALA.entrada)        : horaParaMinutos(ESCALA.saidaSegQuinta) - horaParaMinutos(ESCALA.entrada);
     }
 
     const saldoDia = minutosTrabalhados - minutosEsperados;
