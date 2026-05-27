@@ -349,6 +349,20 @@ function buscarDados() {
     });
 }
 
+function formatarData(val) {
+  if (!val) return "-";
+  const d = new Date(val);
+  if (!isNaN(d)) return String(d.getDate()).padStart(2,"0") + "/" + String(d.getMonth()+1).padStart(2,"0") + "/" + d.getFullYear();
+  return val;
+}
+
+function formatarHora(val) {
+  if (!val) return "-";
+  const d = new Date(val);
+  if (!isNaN(d) && d.getFullYear() === 1899) return String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0") + ":" + String(d.getSeconds()).padStart(2,"0");
+  return val;
+}
+
 function renderizar(data) {
   const conteudo = document.getElementById("conteudo");
 
@@ -365,10 +379,10 @@ function renderizar(data) {
       const incompleto = dia.temIncompleto ? `<span class="badge-incompleto">⚠ incompleto</span>` : "";
       return `
         <tr>
-          <td class="td-data">${dia.data}</td>
+          <td class="td-data">${formatarData(dia.data)}</td>
           <td class="td-dia">${dia.diaSemana}</td>
-          <td class="td-hora">${dia.entrada}</td>
-          <td class="td-hora">${dia.saida}</td>
+          <td class="td-hora">${formatarHora(dia.entrada)}</td>
+          <td class="td-hora">${formatarHora(dia.saida)}</td>
           <td class="td-horas">${minutosParaHora(dia.trabalhado)}</td>
           <td class="td-horas">${minutosParaHora(dia.esperado)}</td>
           <td class="${sc}">${formatarSaldo(dia.saldo)}${incompleto}</td>
