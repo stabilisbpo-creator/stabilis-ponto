@@ -170,8 +170,7 @@ function getDadosPainel(dataInicioStr, dataFimStr) {
     let minutosEsperados = 0;
     if (diaSemana !== 0 && diaSemana !== 6) {
       minutosEsperados = diaSemana === 5
-        ? horaParaMinutos(ESCALA.saidaSexta) - horaParaMinutos(ESCALA.entrada) - ESCALA.intervalo
-        : horaParaMinutos(ESCALA.saidaSegQuinta) - horaParaMinutos(ESCALA.entrada) - ESCALA.intervalo;
+        ? horaParaMinutos(ESCALA.saidaSexta) - horaParaMinutos(ESCALA.entrada)        : horaParaMinutos(ESCALA.saidaSegQuinta) - horaParaMinutos(ESCALA.entrada) - ESCALA.intervalo;
     }
 
     const saldo = minutosTrabalhados - minutosEsperados;
@@ -271,8 +270,7 @@ function atualizarPainel() {
     let minutosEsperados = 0;
     if (diaSemana !== 0 && diaSemana !== 6) {
       minutosEsperados = diaSemana === 5
-        ? horaParaMinutos(ESCALA.saidaSexta) - horaParaMinutos(ESCALA.entrada) - ESCALA.intervalo
-        : horaParaMinutos(ESCALA.saidaSegQuinta) - horaParaMinutos(ESCALA.entrada) - ESCALA.intervalo;
+        ? horaParaMinutos(ESCALA.saidaSexta) - horaParaMinutos(ESCALA.entrada)        : horaParaMinutos(ESCALA.saidaSegQuinta) - horaParaMinutos(ESCALA.entrada) - ESCALA.intervalo;
     }
 
     const saldoDia = minutosTrabalhados - minutosEsperados;
