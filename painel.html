@@ -183,7 +183,7 @@
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxftxUNw0YfpkNgnWWwE5vdNfeUG7_5vJMqnfwG8QmmnRND4wU7GTEtFp_PujWWp0Ou/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZQS6AJK7k_M1nSBnKxOoET6CHYVNrDNgCHnD_GTrWSYRFNeKQztv0G8PrptQYdW6x1w/exec";
 
 // Define mês atual como padrão
 (function() {
@@ -251,7 +251,6 @@ function buscarDados() {
 
   fetch(url)
     .then(r => r.json())
-    .then(data => { console.log(JSON.stringify(data.funcionarios[0].dias[0])); return data; })
     .then(data => renderizar(data))
     .catch(() => {
       document.getElementById("conteudo").innerHTML =
@@ -272,20 +271,29 @@ function renderizar(data) {
 
     const linhas = func.dias.map(dia => {
       const sc = dia.saldo > 0 ? "saldo-pos" : dia.saldo < 0 ? "saldo-neg" : "saldo-zero";
-      const incompleto = dia.temIncompleto ? `<span class="badge-incompleto">⚠ incompleto</span>` : "";
-      const dataFmt   = formatarData(dia.data);
-      const entradaFmt = formatarHora(dia.entrada);
-      const saidaFmt   = formatarHora(dia.saida);
-      return `
-        <tr>
-          <td class="td-data">${dataFmt}</td>
-          <td class="td-dia">${dia.diaSemana}</td>
-          <td class="td-hora">${entradaFmt}</td>
-          <td class="td-hora">${saidaFmt}</td>
-          <td class="td-horas">${minutosParaHora(dia.trabalhado)}</td>
-          <td class="td-horas">${minutosParaHora(dia.esperado)}</td>
-          <td class="${sc}">${formatarSaldo(dia.saldo)}${incompleto}</td>
-        </tr>`;
+      const dataFmt = formatarData(dia.data);
+      const npares = dia.pares ? dia.pares.length : 0;
+
+      // Primeira linha do dia: mostra data, dia da semana, esperado, trabalhado total e saldo
+      // Cada par ocupa uma linha com entrada e saída
+      return (dia.pares || []).map((par, idx) => {
+        const incompleto = par.incompleto ? `<span class="badge-incompleto">⚠ incompleto</span>` : "";
+        const isFirst = idx === 0;
+        return `
+          <tr>
+            ${isFirst
+              ? `<td class="td-data" rowspan="${npares}">${dataFmt}</td>
+                 <td class="td-dia" rowspan="${npares}">${dia.diaSemana}</td>`
+              : ""}
+            <td class="td-hora">${formatarHora(par.entrada)}</td>
+            <td class="td-hora">${formatarHora(par.saida)}${incompleto}</td>
+            <td class="td-horas">${minutosParaHora(par.trabalhado)}</td>
+            ${isFirst
+              ? `<td class="td-horas" rowspan="${npares}">${minutosParaHora(dia.esperado)}</td>
+                 <td class="${sc}" rowspan="${npares}">${formatarSaldo(dia.saldo)}</td>`
+              : ""}
+          </tr>`;
+      }).join("");
     }).join("");
 
     return `
