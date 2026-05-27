@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Banco de Horas — Stabilis BPO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1a365d;
+    --navy-light: #2d4e8a;
+    --navy-faint: #ebf4ff;
+    --gold: #c9a84c;
+    --gold-light: #fdf6e3;
+    --green: #276749;
+    --green-bg: #f0fff4;
+    --green-border: #9ae6b4;
+    --red: #9b2c2c;
+    --red-bg: #fff5f5;
+    --red-border: #fc8181;
+    --gray-50: #f7fafc;
+    --gray-100: #edf2f7;
+    --gray-200: #e2e8f0;
+    --gray-400: #a0aec0;
+    --gray-600: #4a5568;
+    --gray-800: #1a202c;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: #f0f4f8;
+    min-height: 100vh;
+    color: var(--gray-800);
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--navy);
+    color: #fff;
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+  .header-left p { font-size: 12px; opacity: 0.6; margin-top: 2px; }
+  .header-badge {
+    background: rgba(201,168,76,0.2);
+    border: 1px solid rgba(201,168,76,0.4);
+    color: var(--gold);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  /* ── FILTROS ── */
+  .filtros-bar {
+    background: #fff;
+    border-bottom: 1px solid var(--gray-200);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .filtro-group { display: flex; flex-direction: column; gap: 4px; }
+  .filtro-group label { font-size: 11px; font-weight: 600; color: var(--gray-600); text-transform: uppercase; letter-spacing: 0.5px; }
+  .filtro-group input[type="date"] {
+    padding: 8px 12px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: var(--sans);
+    color: var(--gray-800);
+    background: var(--gray-50);
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .filtro-group input[type="date"]:focus { outline: none; border-color: var(--navy); background: #fff; }
+
+  .btn-filtrar {
+    padding: 8px 20px;
+    background: var(--navy);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: background 0.15s;
+    align-self: flex-end;
+  }
+  .btn-filtrar:hover { background: var(--navy-light); }
+
+  .btn-limpar {
+    padding: 8px 16px;
+    background: transparent;
+    color: var(--gray-600);
+    border: 1.5px solid var(--gray-200);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: all 0.15s;
+    align-self: flex-end;
+  }
+  .btn-limpar:hover { border-color: var(--gray-400); color: var(--gray-800); }
+
+  .periodo-label {
+    font-size: 12px;
+    color: var(--gray-400);
+    align-self: flex-end;
+    padding-bottom: 10px;
+  }
+
+  /* ── CONTEÚDO ── */
+  .conteudo {
+    padding: 1.5rem 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  /* ── LOADING / ERRO ── */
+  .estado {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--gray-400);
+    font-size: 15px;
+  }
+  .estado .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid var(--gray-200);
+    border-top-color: var(--navy);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── CARD FUNCIONÁRIO ── */
+  .func-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    animation: fadeUp 0.3s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .func-header {
+    background: var(--navy);
+    color: #fff;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .func-nome {
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: capitalize;
+    letter-spacing: -0.2px;
+  }
+  .func-resumo {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .resumo-item { text-align: right; }
+  .resumo-item .label { font-size: 10px; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.5px; }
+  .resumo-item .valor {
+    font-family: var(--mono);
+    font-size: 16px;
+    font-weight: 500;
+    margin-top: 1px;
+  }
+  .valor.positivo { color: #6ee7b7; }
+  .valor.negativo { color: #fca5a5; }
+  .valor.neutro   { color: #e2e8f0; }
+
+  /* ── TABELA DE DIAS ── */
+  .tabela-wrap {
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead tr {
+    background: var(--gray-50);
+    border-bottom: 2px solid var(--gray-200);
+  }
+  thead th {
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray-600);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--gray-100);
+    transition: background 0.1s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--gray-50); }
+  tbody td {
+    padding: 10px 16px;
+    color: var(--gray-800);
+    white-space: nowrap;
+  }
+
+  .td-data { font-weight: 600; color: var(--navy); }
+  .td-dia  { color: var(--gray-400); font-size: 12px; }
+  .td-hora { font-family: var(--mono); font-size: 12px; }
+  .td-horas { font-family: var(--mono); font-size: 13px; }
+
+  .saldo-pos { color: var(--green); font-weight: 600; font-family: var(--mono); }
+  .saldo-neg { color: var(--red);   font-weight: 600; font-family: var(--mono); }
+  .saldo-zero { color: var(--gray-400); font-family: var(--mono); }
+
+  .badge-incompleto {
+    background: #fffbeb;
+    color: #744210;
+    border: 1px solid #f6ad55;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 20px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  /* ── VAZIO ── */
+  .vazio {
+    text-align: center;
+    padding: 3rem;
+    color: var(--gray-400);
+    font-size: 14px;
+  }
+
+  @media (max-width: 640px) {
+    .header, .filtros-bar, .conteudo { padding-left: 1rem; padding-right: 1rem; }
+    .func-resumo { gap: 1rem; }
+    .resumo-item .valor { font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>⏱ Banco de Horas</h1>
+    <p>Stabilis BPO — Gestão de Ponto</p>
+  </div>
+  <span class="header-badge">Uso interno</span>
+</div>
+
+<div class="filtros-bar">
+  <div class="filtro-group">
+    <label>Data início</label>
+    <input type="date" id="dataInicio">
+  </div>
+  <div class="filtro-group">
+    <label>Data fim</label>
+    <input type="date" id="dataFim">
+  </div>
+  <button class="btn-filtrar" onclick="buscarDados()">Filtrar</button>
+  <button class="btn-limpar" onclick="limparFiltro()">Ver tudo</button>
+  <span class="periodo-label" id="periodoLabel"></span>
+</div>
+
+<div class="conteudo" id="conteudo">
+  <div class="estado">
+    <div class="spinner"></div>
+    Carregando dados...
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzHgrUKGE6MzEyh8AwpXrchPOSq1QC3waFALeq36KoWF1fNi0y7UWpiMVDhwechN7xe/exec";
+
+// Define mês atual como padrão
+(function() {
+  const hoje = new Date();
+  const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  document.getElementById("dataInicio").value = toISO(primeiroDia);
+  document.getElementById("dataFim").value = toISO(hoje);
+})();
+
+function toISO(d) {
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+
+function limparFiltro() {
+  document.getElementById("dataInicio").value = "";
+  document.getElementById("dataFim").value = "";
+  buscarDados();
+}
+
+function buscarDados() {
+  const inicio = document.getElementById("dataInicio").value;
+  const fim = document.getElementById("dataFim").value;
+
+  document.getElementById("conteudo").innerHTML = `
+    <div class="estado"><div class="spinner"></div>Carregando...</div>`;
+
+  // Atualiza label de período
+  const label = document.getElementById("periodoLabel");
+  if (inicio && fim) {
+    const di = new Date(inicio + "T00:00:00");
+    const df = new Date(fim + "T00:00:00");
+    label.textContent = "Período: " + di.toLocaleDateString("pt-BR") + " → " + df.toLocaleDateString("pt-BR");
+  } else {
+    label.textContent = "Período: todos os registros";
+  }
+
+  let url = SCRIPT_URL + "?action=dadosPainel";
+  if (inicio) url += "&dataInicio=" + inicio;
+  if (fim)    url += "&dataFim=" + fim;
+
+  fetch(url)
+    .then(r => r.json())
+    .then(data => renderizar(data))
+    .catch(() => {
+      document.getElementById("conteudo").innerHTML = `
+        <div class="estado">❌ Erro ao carregar dados. Verifique a conexão.</div>`;
+    });
+}
+
+function renderizar(data) {
+  const conteudo = document.getElementById("conteudo");
+
+  if (!data.funcionarios || data.funcionarios.length === 0) {
+    conteudo.innerHTML = `<div class="vazio">Nenhum registro encontrado para o período selecionado.</div>`;
+    return;
+  }
+
+  conteudo.innerHTML = data.funcionarios.map((func, idx) => {
+    const saldoClass = func.saldoTotal > 0 ? "positivo" : func.saldoTotal < 0 ? "negativo" : "neutro";
+
+    const linhas = func.dias.map(dia => {
+      const sc = dia.saldo > 0 ? "saldo-pos" : dia.saldo < 0 ? "saldo-neg" : "saldo-zero";
+      const incompleto = dia.temIncompleto ? `<span class="badge-incompleto">⚠ incompleto</span>` : "";
+      return `
+        <tr>
+          <td class="td-data">${dia.data}</td>
+          <td class="td-dia">${dia.diaSemana}</td>
+          <td class="td-hora">${dia.entrada}</td>
+          <td class="td-hora">${dia.saida}</td>
+          <td class="td-horas">${minutosParaHora(dia.trabalhado)}</td>
+          <td class="td-horas">${minutosParaHora(dia.esperado)}</td>
+          <td class="${sc}">${formatarSaldo(dia.saldo)}${incompleto}</td>
+        </tr>`;
+    }).join("");
+
+    return `
+      <div class="func-card" style="animation-delay:${idx * 0.05}s">
+        <div class="func-header">
+          <span class="func-nome">👤 ${func.nome}</span>
+          <div class="func-resumo">
+            <div class="resumo-item">
+              <div class="label">Esperado</div>
+              <div class="valor neutro">${minutosParaHora(func.totalEsperado)}</div>
+            </div>
+            <div class="resumo-item">
+              <div class="label">Trabalhado</div>
+              <div class="valor neutro">${minutosParaHora(func.totalTrabalhado)}</div>
+            </div>
+            <div class="resumo-item">
+              <div class="label">Saldo</div>
+              <div class="valor ${saldoClass}">${formatarSaldo(func.saldoTotal)}</div>
+            </div>
+          </div>
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Dia</th>
+                <th>Entrada</th>
+                <th>Saída</th>
+                <th>Trabalhado</th>
+                <th>Esperado</th>
+                <th>Saldo do Dia</th>
+              </tr>
+            </thead>
+            <tbody>${linhas}</tbody>
+          </table>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+function minutosParaHora(min) {
+  if (isNaN(min)) return "00h00m";
+  const sinal = min < 0 ? "-" : "";
+  const abs = Math.abs(min);
+  const h = Math.floor(abs / 60);
+  const m = abs % 60;
+  return sinal + String(h).padStart(2,"0") + "h" + String(m).padStart(2,"0") + "m";
+}
+
+function formatarSaldo(min) {
+  if (isNaN(min)) return "+00h00m";
+  return (min >= 0 ? "+" : "") + minutosParaHora(min);
+}
+
+// Carrega ao abrir
+buscarDados();
+</script>
+</body>
+</html>
