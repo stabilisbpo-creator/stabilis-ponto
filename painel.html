@@ -342,7 +342,6 @@ function buscarDados() {
 
   fetch(url)
     .then(r => r.json())
-    .then(data => { console.log(JSON.stringify(data)); return data; })
     .then(data => renderizar(data))
     .catch(() => {
       document.getElementById("conteudo").innerHTML = `
