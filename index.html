@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Registro de Ponto - Stabilis BPO</title>
+<title>Registro de Ponto</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -19,6 +19,8 @@
   label { display: block; font-size: 12px; font-weight: 600; color: #4a5568; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
   .funcionario-box { padding: 10px 12px; border: 1.5px solid #c3dafe; border-radius: 8px; font-size: 15px; font-weight: 600; color: #1a365d; background: #ebf4ff; display: flex; align-items: center; gap: 8px; }
   .sem-funcionario { padding: 10px 12px; border: 1.5px dashed #fc8181; border-radius: 8px; font-size: 13px; color: #9b2c2c; background: #fff5f5; }
+  .feriado-banner { padding: 10px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; background: #fffbeb; border: 1px solid #f6ad55; color: #744210; margin-bottom: 1rem; display: none; align-items: center; gap: 8px; }
+  .feriado-banner.visivel { display: flex; }
   .status-atual { padding: 10px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px; margin-bottom: 1rem; }
   .status-atual.aguardando-entrada { background: #f0fff4; color: #276749; border: 1px solid #9ae6b4; }
   .status-atual.aguardando-saida { background: #fff5f5; color: #9b2c2c; border: 1px solid #fc8181; }
@@ -47,7 +49,7 @@
 <div class="card">
   <div class="header">
     <h1><i class="ti ti-clock"></i> Registro de Ponto</h1>
-    <p>Stabilis BPO</p>
+    <p id="nomeEmpresa">Carregando...</p>
     <div class="clock" id="clock">--:--:--</div>
     <div class="date-str" id="datestr">carregando...</div>
   </div>
@@ -56,6 +58,13 @@
       <label><i class="ti ti-user"></i> Funcionário</label>
       <div id="funcionario-display"></div>
     </div>
+
+    <!-- Banner de feriado (aparece automaticamente se hoje for feriado) -->
+    <div class="feriado-banner" id="feriadoBanner">
+      <i class="ti ti-calendar-event"></i>
+      <span id="feriadoTexto">Hoje é feriado.</span>
+    </div>
+
     <div class="status-atual carregando" id="statusAtual">
       <i class="ti ti-loader"></i> Verificando último registro...
     </div>
@@ -86,13 +95,23 @@
     <div class="status-msg" id="statusMsg"></div>
   </div>
 </div>
+
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxftxUNw0YfpkNgnWWwE5vdNfeUG7_5vJMqnfwG8QmmnRND4wU7GTEtFp_PujWWp0Ou/exec";
+// =============================================
+// CONFIGURAÇÃO — atualize após reimplantar
+// =============================================
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwmR3GfeHxv2K8qo4fvjR2ZyFJ8IKXV3ewkD4BXAgfps8AKz-zSlJ81GtLhkF6qpS4LvQ/exec";
+
+// Nome da empresa (aparece no cabeçalho)
+const NOME_EMPRESA = "Stabilis BPO";
+
 let tipoSelecionado = "";
 
 const params = new URLSearchParams(window.location.search);
 const nomeFuncionario = params.get("funcionario") || "";
 const chaveStorage = "ponto_" + nomeFuncionario;
+
+document.getElementById("nomeEmpresa").textContent = NOME_EMPRESA;
 
 // Exibe nome
 const displayEl = document.getElementById("funcionario-display");
@@ -104,16 +123,52 @@ if (nomeFuncionario) {
   document.getElementById("statusAtual").style.display = "none";
 }
 
-// Relógio
+// =============================================
+// RELÓGIO
+// =============================================
 function atualizarRelogio() {
   const agora = new Date();
   document.getElementById("clock").textContent = agora.toLocaleTimeString("pt-BR");
   const dias = ["domingo","segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado"];
   const meses = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
-  document.getElementById("datestr").textContent = dias[agora.getDay()] + ", " + agora.getDate() + " de " + meses[agora.getMonth()] + " de " + agora.getFullYear();
+  document.getElementById("datestr").textContent =
+    dias[agora.getDay()] + ", " + agora.getDate() + " de " + meses[agora.getMonth()] + " de " + agora.getFullYear();
 }
 setInterval(atualizarRelogio, 1000);
 atualizarRelogio();
+
+// =============================================
+// FERIADOS — verifica se hoje é feriado
+// =============================================
+function dataHojeStr() {
+  const hoje = new Date();
+  const d = String(hoje.getDate()).padStart(2,"0");
+  const m = String(hoje.getMonth()+1).padStart(2,"0");
+  return `${d}/${m}/${hoje.getFullYear()}`;
+}
+
+async function verificarFeriado() {
+  if (!nomeFuncionario) return;
+  try {
+    const r = await fetch(SCRIPT_URL + "?action=feriados");
+    const data = await r.json();
+    const hoje = dataHojeStr();
+    const feriado = (data.feriados || []).find(f => f.data === hoje);
+    if (feriado) {
+      const textos = {
+        feriado: `🎉 Hoje é feriado: ${feriado.descricao || "feriado"}. Registro possível, mas será marcado como hora extra.`,
+        folga_compensatoria: `🏖️ Hoje é folga compensatória: ${feriado.descricao || ""}. Não há jornada esperada.`,
+        ponto_facultativo: `📋 Hoje é ponto facultativo: ${feriado.descricao || ""}. Verifique com a empresa.`
+      };
+      document.getElementById("feriadoTexto").textContent = textos[feriado.tipo] || textos.feriado;
+      document.getElementById("feriadoBanner").classList.add("visivel");
+    }
+  } catch(e) {
+    // silencioso — não bloqueia o app
+  }
+}
+
+verificarFeriado();
 
 // =============================================
 // ESTADO LOCAL (localStorage)
@@ -150,7 +205,6 @@ function aplicarEstado(proximoTipo, ultimaData) {
     btnSaida.setAttribute("disabled", "true");
   }
 
-  // Mostra campo retroativo se o último registro foi de outro dia
   if (ultimaData && ultimaData !== hoje) {
     document.getElementById("retroativoBox").style.display = "block";
     document.getElementById("campoJustificativa").style.display = "block";
@@ -163,30 +217,24 @@ function aplicarEstado(proximoTipo, ultimaData) {
 }
 
 // =============================================
-// INICIALIZAR — usa localStorage primeiro, depois confirma com servidor
+// INICIALIZAR
 // =============================================
 function inicializar() {
   if (!nomeFuncionario) return;
 
-  // 1. Aplica estado local imediatamente (evita piscar)
   const local = lerEstadoLocal();
   if (local) {
     const proximoTipo = local.ultimoTipo === "Entrada" ? "Saída" : "Entrada";
     aplicarEstado(proximoTipo, local.ultimaData);
   }
 
-  // 2. Confirma com servidor em segundo plano
   fetch(SCRIPT_URL + "?action=ultimoRegistro&funcionario=" + encodeURIComponent(nomeFuncionario))
     .then(r => r.json())
     .then(data => {
       aplicarEstado(data.proximoTipo, data.ultimaData);
-      // Atualiza localStorage com dado do servidor
-      if (data.ultimoTipo) {
-        salvarEstadoLocal(data.ultimoTipo, data.ultimaData);
-      }
+      if (data.ultimoTipo) salvarEstadoLocal(data.ultimoTipo, data.ultimaData);
     })
     .catch(() => {
-      // Se servidor falhar, mantém o estado local
       if (!local) aplicarEstado("Entrada", null);
     });
 }
@@ -234,23 +282,23 @@ async function registrar() {
 
   const tipoEnviado = tipoSelecionado;
 
-  const payload = {
-    action: "registrar",
-    funcionario: nomeFuncionario,
-    tipo: tipoEnviado,
-    data: dataHora.data,
-    hora: dataHora.hora,
-    justificativa,
-    retroativo: !!dataRetroativa
-  };
-
   try {
-    await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-    
-    // Salva estado no localStorage
+    await fetch(SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "registrar",
+        funcionario: nomeFuncionario,
+        tipo: tipoEnviado,
+        data: dataHora.data,
+        hora: dataHora.hora,
+        justificativa,
+        retroativo: !!dataRetroativa
+      })
+    });
+
     salvarEstadoLocal(tipoEnviado, dataHora.data);
-    
-    // Atualiza tela localmente
     const proximoTipo = tipoEnviado === "Entrada" ? "Saída" : "Entrada";
     aplicarEstado(proximoTipo, dataHora.data);
 
