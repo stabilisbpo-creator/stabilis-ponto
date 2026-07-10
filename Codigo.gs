@@ -55,8 +55,12 @@ function doGet(e) {
     resultado = { feriados: lerFeriados() };
   } else if (action === "configuracoes") {
     resultado = lerConfiguracoes();
+  } else if (action === "ultimosRegistros") {
+    resultado = { registros: listarUltimosRegistros(e.parameter.funcionario, 5) };
+  } else if (action === "ajustesPendentes") {
+    resultado = { ajustes: listarAjustesPendentes() };
   } else {
-    resultado = { status: "ok", versao: "2.0" };
+    resultado = { status: "ok", versao: "2.1" };
   }
 
   if (callback) {
@@ -74,6 +78,8 @@ function doPost(e) {
   if (dados.action === "salvarFeriado") return salvarFeriado(dados);
   if (dados.action === "removerFeriado") return removerFeriado(dados);
   if (dados.action === "salvarConfiguracoes") return salvarConfiguracoes(dados);
+  if (dados.action === "pedirAjuste") return pedirAjuste(dados);
+  if (dados.action === "responderAjuste") return responderAjuste(dados);
 
   return responder({ status: "erro", msg: "Ação desconhecida" });
 }
@@ -87,20 +93,29 @@ function salvarRegistro(dados) {
   let aba = ss.getSheetByName("Registros");
   if (!aba) {
     aba = ss.insertSheet("Registros");
-    aba.appendRow(["Data", "Hora", "Funcionário", "Tipo", "Justificativa", "Retroativo"]);
+    aba.appendRow(["Data", "Hora", "Funcionário", "Tipo", "Justificativa", "Retroativo", "ID", "DataEfetiva", "HoraEfetiva"]);
+    aba.getRange(1, 1, 1, 9).setFontWeight("bold").setBackground("#1a365d").setFontColor("#ffffff");
   }
 
+  const id = Utilities.getUuid();
+
+  // Data/Hora = horário real do dispositivo no momento do clique — NUNCA é editado depois.
+  // DataEfetiva/HoraEfetiva = o que entra no cálculo. Começa igual ao real e só muda
+  // se um pedido de ajuste for aprovado pelo admin (ver responderAjuste).
   aba.appendRow([
     dados.data,
     dados.hora,
     dados.funcionario,
     dados.tipo,
     dados.justificativa || "",
-    dados.retroativo ? "Sim" : "Não"
+    dados.retroativo ? "Sim" : "Não",
+    id,
+    dados.data,
+    dados.hora
   ]);
 
   atualizarPainel();
-  return responder({ status: "ok" });
+  return responder({ status: "ok", id });
 }
 
 
@@ -189,6 +204,137 @@ function ehFeriado(dataStr) {
 
 
 // =============================================
+// AJUSTES DE PONTO
+// O horário real batido (Data/Hora) nunca é alterado.
+// Um pedido de ajuste só muda o cálculo (DataEfetiva/HoraEfetiva)
+// depois de aprovado pelo admin.
+// =============================================
+function listarUltimosRegistros(funcionario, limite) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const aba = ss.getSheetByName("Registros");
+  if (!aba || aba.getLastRow() < 2) return [];
+
+  const dados = aba.getRange(2, 1, aba.getLastRow() - 1, 9).getValues();
+  const doFuncionario = dados
+    .filter(r => r[2] === funcionario && r[0] !== "" && r[6]) // só registros com ID (versão nova)
+    .map(r => ({
+      id: r[6],
+      data: formatarData(r[0]),
+      hora: r[1].toString(),
+      tipo: r[3],
+      dataEfetiva: formatarData(r[7] || r[0]),
+      horaEfetiva: (r[8] || r[1]).toString(),
+      ajustado: formatarData(r[7] || r[0]) !== formatarData(r[0]) || (r[8] || r[1]).toString() !== r[1].toString()
+    }))
+    .reverse();
+
+  return doFuncionario.slice(0, limite || 5);
+}
+
+function pedirAjuste(dados) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let aba = ss.getSheetByName("Ajustes");
+  if (!aba) {
+    aba = ss.insertSheet("Ajustes");
+    aba.appendRow(["ID", "RegistroID", "Funcionário", "Data Original", "Hora Original",
+      "Data Solicitada", "Hora Solicitada", "Motivo", "Status", "Data Solicitação", "Aprovado Por", "Data Resposta"]);
+    aba.getRange(1, 1, 1, 12).setFontWeight("bold").setBackground("#1a365d").setFontColor("#ffffff");
+  }
+
+  const id = Utilities.getUuid();
+  const agora = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm");
+
+  aba.appendRow([
+    id,
+    dados.registroId || "",
+    dados.funcionario,
+    dados.dataOriginal,
+    dados.horaOriginal,
+    dados.dataSolicitada,
+    dados.horaSolicitada,
+    dados.motivo || "",
+    "Pendente",
+    agora,
+    "",
+    ""
+  ]);
+
+  return responder({ status: "ok", id });
+}
+
+function listarAjustesPendentes() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const aba = ss.getSheetByName("Ajustes");
+  if (!aba || aba.getLastRow() < 2) return [];
+
+  const dados = aba.getRange(2, 1, aba.getLastRow() - 1, 12).getValues();
+  return dados
+    .filter(r => r[0] && r[8] === "Pendente")
+    .map(r => ({
+      id: r[0],
+      registroId: r[1],
+      funcionario: r[2],
+      dataOriginal: formatarData(r[3]),
+      horaOriginal: r[4].toString(),
+      dataSolicitada: formatarData(r[5]),
+      horaSolicitada: r[6].toString(),
+      motivo: r[7],
+      dataSolicitacao: r[9]
+    }));
+}
+
+function responderAjuste(dados) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const abaAjustes = ss.getSheetByName("Ajustes");
+  if (!abaAjustes || abaAjustes.getLastRow() < 2) {
+    return responder({ status: "erro", msg: "Nenhum ajuste encontrado" });
+  }
+
+  const linhas = abaAjustes.getRange(2, 1, abaAjustes.getLastRow() - 1, 12).getValues();
+  let linhaEncontrada = -1;
+  let registroId, dataSolicitada, horaSolicitada;
+
+  for (let i = 0; i < linhas.length; i++) {
+    if (linhas[i][0] === dados.id) {
+      linhaEncontrada = i + 2;
+      registroId = linhas[i][1];
+      dataSolicitada = linhas[i][5];
+      horaSolicitada = linhas[i][6];
+      break;
+    }
+  }
+
+  if (linhaEncontrada === -1) return responder({ status: "erro", msg: "Ajuste não encontrado" });
+
+  const status = dados.aprovado ? "Aprovado" : "Rejeitado";
+  const agora = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm");
+
+  abaAjustes.getRange(linhaEncontrada, 9).setValue(status);
+  abaAjustes.getRange(linhaEncontrada, 11).setValue(dados.aprovadoPor || "Admin");
+  abaAjustes.getRange(linhaEncontrada, 12).setValue(agora);
+
+  // Só quando aprovado: atualiza DataEfetiva/HoraEfetiva no registro original.
+  // O horário real batido continua intacto nas colunas Data/Hora.
+  if (dados.aprovado && registroId) {
+    const abaRegistros = ss.getSheetByName("Registros");
+    if (abaRegistros && abaRegistros.getLastRow() >= 2) {
+      const regs = abaRegistros.getRange(2, 1, abaRegistros.getLastRow() - 1, 9).getValues();
+      for (let i = 0; i < regs.length; i++) {
+        if (regs[i][6] === registroId) {
+          abaRegistros.getRange(i + 2, 8).setValue(dataSolicitada);
+          abaRegistros.getRange(i + 2, 9).setValue(horaSolicitada);
+          break;
+        }
+      }
+    }
+    atualizarPainel();
+  }
+
+  return responder({ status: "ok" });
+}
+
+
+// =============================================
 // CONFIGURAÇÕES (aba editável)
 // =============================================
 function lerConfiguracoes() {
@@ -273,20 +419,22 @@ function atualizarPainel() {
   const feriados = lerFeriados();
   const feriadoSet = new Set(feriados.map(f => f.data));
 
-  const dados = abaRegistros.getRange(2, 1, abaRegistros.getLastRow() - 1, 6).getValues();
+  const dados = abaRegistros.getRange(2, 1, abaRegistros.getLastRow() - 1, 9).getValues();
   const hoje = new Date();
   const mesAtual = hoje.getMonth();
   const anoAtual = hoje.getFullYear();
   const hojeStr = Utilities.formatDate(hoje, Session.getScriptTimeZone(), "dd/MM/yyyy");
 
-  // Agrupa registros por funcionário + data
+  // Agrupa registros por funcionário + data — usa DataEfetiva/HoraEfetiva (colunas 8 e 9),
+  // que refletem ajustes aprovados. Linhas antigas sem essas colunas caem no horário real (fallback).
   const mapa = {};
   dados.forEach(r => {
     if (!r[0] || !r[2]) return;
-    const dataStr = formatarData(r[0]);
+    const dataStr = formatarData(r[7] || r[0]);
+    const horaStr = (r[8] || r[1]).toString();
     const chave = r[2] + "|" + dataStr;
     if (!mapa[chave]) mapa[chave] = { func: r[2], data: dataStr, registros: [] };
-    mapa[chave].registros.push({ hora: r[1].toString(), tipo: r[3] });
+    mapa[chave].registros.push({ hora: horaStr, tipo: r[3] });
   });
 
   // Processa cada funcionário
@@ -504,6 +652,34 @@ function recalcularTudo() {
 
 
 // =============================================
+// MIGRAÇÃO — execute UMA VEZ após subir esta versão
+// Preenche ID/DataEfetiva/HoraEfetiva nas linhas antigas
+// que foram criadas antes da função de ajuste existir.
+// =============================================
+function migrarRegistrosAntigos() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const aba = ss.getSheetByName("Registros");
+  if (!aba || aba.getLastRow() < 2) {
+    Logger.log("Nenhum registro para migrar.");
+    return;
+  }
+
+  const numLinhas = aba.getLastRow() - 1;
+  const dados = aba.getRange(2, 1, numLinhas, 9).getValues();
+  let migradas = 0;
+
+  dados.forEach((r, i) => {
+    const linha = i + 2;
+    if (!r[6]) { aba.getRange(linha, 7).setValue(Utilities.getUuid()); migradas++; }
+    if (!r[7]) aba.getRange(linha, 8).setValue(r[0]);
+    if (!r[8]) aba.getRange(linha, 9).setValue(r[1]);
+  });
+
+  Logger.log("Migração concluída: " + migradas + " linha(s) receberam ID novo, de " + numLinhas + " verificadas.");
+}
+
+
+// =============================================
 // CRIAR ESTRUTURA INICIAL DA PLANILHA
 // Execute uma vez ao configurar
 // =============================================
@@ -514,8 +690,17 @@ function inicializarPlanilha() {
   let abaReg = ss.getSheetByName("Registros");
   if (!abaReg) {
     abaReg = ss.insertSheet("Registros");
-    abaReg.appendRow(["Data", "Hora", "Funcionário", "Tipo", "Justificativa", "Retroativo"]);
-    abaReg.getRange(1, 1, 1, 6).setFontWeight("bold").setBackground("#1a365d").setFontColor("#ffffff");
+    abaReg.appendRow(["Data", "Hora", "Funcionário", "Tipo", "Justificativa", "Retroativo", "ID", "DataEfetiva", "HoraEfetiva"]);
+    abaReg.getRange(1, 1, 1, 9).setFontWeight("bold").setBackground("#1a365d").setFontColor("#ffffff");
+  }
+
+  // Aba Ajustes
+  let abaAju = ss.getSheetByName("Ajustes");
+  if (!abaAju) {
+    abaAju = ss.insertSheet("Ajustes");
+    abaAju.appendRow(["ID", "RegistroID", "Funcionário", "Data Original", "Hora Original",
+      "Data Solicitada", "Hora Solicitada", "Motivo", "Status", "Data Solicitação", "Aprovado Por", "Data Resposta"]);
+    abaAju.getRange(1, 1, 1, 12).setFontWeight("bold").setBackground("#1a365d").setFontColor("#ffffff");
   }
 
   // Aba Feriados

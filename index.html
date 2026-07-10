@@ -34,9 +34,27 @@
   .tipo-btn[disabled] { opacity: 0.35; cursor: not-allowed; background: #edf2f7; pointer-events: none; }
   .tipo-btn.entrada.selected { background: #f0fff4; border-color: #276749; color: #276749; font-weight: 600; }
   .tipo-btn.saida.selected { background: #fff5f5; border-color: #9b2c2c; color: #9b2c2c; font-weight: 600; }
-  .retroativo-box { background: #fffbeb; border: 1.5px solid #f6ad55; border-radius: 8px; padding: 12px; margin-bottom: 1rem; font-size: 13px; color: #744210; display: none; }
-  .retroativo-box strong { display: block; margin-bottom: 8px; }
   .hint { font-size: 12px; color: #718096; margin-top: 6px; }
+  .registros-recentes { margin-top: 1.25rem; border-top: 1px solid #e2e8f0; padding-top: 1rem; }
+  .registros-recentes h3 { font-size: 12px; font-weight: 600; color: #4a5568; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .registro-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 6px; font-size: 13px; }
+  .registro-item .reg-info { flex: 1; color: #2d3748; }
+  .registro-item .reg-tipo { font-weight: 600; color: #1a365d; }
+  .registro-item .reg-ajustado { font-size: 11px; color: #d69e2e; font-weight: 600; margin-left: 4px; }
+  .btn-ajuste { border: 1px solid #c3dafe; background: #ebf4ff; color: #2c5282; font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+  .btn-ajuste:hover { background: #d6e4ff; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); align-items: center; justify-content: center; padding: 1rem; z-index: 10; }
+  .modal-overlay.aberto { display: flex; }
+  .modal-box { background: #fff; border-radius: 14px; padding: 1.5rem; width: 100%; max-width: 380px; }
+  .modal-box h3 { font-size: 16px; color: #1a365d; margin-bottom: 4px; }
+  .modal-box .modal-sub { font-size: 13px; color: #718096; margin-bottom: 1rem; }
+  .modal-box .field { margin-bottom: 12px; }
+  .modal-box input, .modal-box textarea { width: 100%; padding: 9px 11px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; }
+  .modal-box textarea { resize: none; height: 64px; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 1rem; }
+  .modal-actions button { flex: 1; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; }
+  .modal-cancelar { background: #f7fafc; color: #4a5568; border: 1px solid #e2e8f0 !important; }
+  .modal-confirmar { background: #1a365d; color: #fff; }
   .submit-btn { width: 100%; padding: 13px; background: #1a365d; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 0.5rem; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
   .submit-btn:hover { background: #2d4e8a; }
   .submit-btn:disabled { background: #a0aec0; cursor: not-allowed; }
@@ -79,20 +97,40 @@
         </div>
       </div>
     </div>
-    <div class="retroativo-box" id="retroativoBox">
-      <strong><i class="ti ti-alert-triangle"></i> Esqueceu de registrar?</strong>
-      Informe a data e hora real do registro esquecido:
-      <input type="datetime-local" id="dataRetroativa" style="margin-top:8px;" />
-      <p class="hint">Preencha apenas se o registro for de outro dia/horário.</p>
-    </div>
-    <div class="field" id="campoJustificativa" style="display:none;">
-      <label>Justificativa / Observação</label>
-      <textarea id="justificativa" placeholder="Ex: esqueci de registrar a saída ontem..."></textarea>
-    </div>
+    <p class="hint" style="margin-bottom:1rem;">O registro sempre usa o horário atual deste dispositivo. Se marcar errado, use "Pedir ajuste" abaixo.</p>
     <button class="submit-btn" id="btnRegistrar" onclick="registrar()">
       <i class="ti ti-check"></i> Registrar ponto
     </button>
     <div class="status-msg" id="statusMsg"></div>
+
+    <div class="registros-recentes" id="registrosRecentes" style="display:none;">
+      <h3><i class="ti ti-history"></i> Meus últimos registros</h3>
+      <div id="listaRegistros"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL — PEDIR AJUSTE -->
+<div class="modal-overlay" id="modalAjuste">
+  <div class="modal-box">
+    <h3><i class="ti ti-edit"></i> Pedir ajuste</h3>
+    <p class="modal-sub" id="modalOriginal">Registro original: --</p>
+    <div class="field">
+      <label>Horário correto</label>
+      <input type="time" id="ajusteHora">
+    </div>
+    <div class="field">
+      <label>Data (só mude se for de outro dia)</label>
+      <input type="date" id="ajusteData">
+    </div>
+    <div class="field">
+      <label>Motivo (obrigatório)</label>
+      <textarea id="ajusteMotivo" placeholder="Ex: passei no médico de manhã e cheguei antes do que marquei"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancelar" onclick="fecharModalAjuste()">Cancelar</button>
+      <button class="modal-confirmar" onclick="enviarAjuste()">Enviar pedido</button>
+    </div>
   </div>
 </div>
 
@@ -205,13 +243,6 @@ function aplicarEstado(proximoTipo, ultimaData) {
     btnSaida.setAttribute("disabled", "true");
   }
 
-  if (ultimaData && ultimaData !== hoje) {
-    document.getElementById("retroativoBox").style.display = "block";
-    document.getElementById("campoJustificativa").style.display = "block";
-  } else {
-    document.getElementById("retroativoBox").style.display = "none";
-  }
-
   document.querySelectorAll(".tipo-btn").forEach(b => b.classList.remove("selected"));
   tipoSelecionado = "";
 }
@@ -249,37 +280,21 @@ function selecionarTipo(el) {
   document.querySelectorAll(".tipo-btn").forEach(b => b.classList.remove("selected"));
   el.classList.add("selected");
   tipoSelecionado = el.getAttribute("data-tipo");
-  document.getElementById("campoJustificativa").style.display = "block";
 }
 
 // =============================================
-// REGISTRAR PONTO
+// REGISTRAR PONTO — sempre usa o horário real do dispositivo
 // =============================================
 async function registrar() {
-  const justificativa = document.getElementById("justificativa").value;
-  const dataRetroativa = document.getElementById("dataRetroativa").value;
   const btn = document.getElementById("btnRegistrar");
 
   if (!tipoSelecionado) { mostrarStatus("erro", "Selecione o tipo de registro."); return; }
 
-  const retroativoVisivel = document.getElementById("retroativoBox").style.display !== "none";
-  if (retroativoVisivel && dataRetroativa && !justificativa.trim()) {
-    mostrarStatus("erro", "Preencha a justificativa para o registro retroativo.");
-    return;
-  }
-
   btn.disabled = true;
   btn.innerHTML = '<i class="ti ti-loader"></i> Enviando...';
 
-  let dataHora;
-  if (dataRetroativa) {
-    const dt = new Date(dataRetroativa);
-    dataHora = { data: dt.toLocaleDateString("pt-BR"), hora: dt.toLocaleTimeString("pt-BR") };
-  } else {
-    const agora = new Date();
-    dataHora = { data: agora.toLocaleDateString("pt-BR"), hora: agora.toLocaleTimeString("pt-BR") };
-  }
-
+  const agora = new Date();
+  const dataHora = { data: agora.toLocaleDateString("pt-BR"), hora: agora.toLocaleTimeString("pt-BR") };
   const tipoEnviado = tipoSelecionado;
 
   try {
@@ -292,9 +307,7 @@ async function registrar() {
         funcionario: nomeFuncionario,
         tipo: tipoEnviado,
         data: dataHora.data,
-        hora: dataHora.hora,
-        justificativa,
-        retroativo: !!dataRetroativa
+        hora: dataHora.hora
       })
     });
 
@@ -303,8 +316,7 @@ async function registrar() {
     aplicarEstado(proximoTipo, dataHora.data);
 
     mostrarStatus("ok", "✓ Ponto registrado com sucesso às " + dataHora.hora);
-    document.getElementById("justificativa").value = "";
-    document.getElementById("dataRetroativa").value = "";
+    setTimeout(carregarUltimosRegistros, 800);
 
   } catch(e) {
     mostrarStatus("erro", "Erro ao registrar. Verifique sua conexão.");
@@ -319,6 +331,97 @@ function mostrarStatus(tipo, texto) {
   msg.className = "status-msg " + tipo;
   msg.textContent = texto;
 }
+
+// =============================================
+// MEUS ÚLTIMOS REGISTROS + PEDIR AJUSTE
+// =============================================
+let registroSelecionado = null;
+
+async function carregarUltimosRegistros() {
+  if (!nomeFuncionario) return;
+  try {
+    const r = await fetch(SCRIPT_URL + "?action=ultimosRegistros&funcionario=" + encodeURIComponent(nomeFuncionario));
+    const data = await r.json();
+    renderRegistros(data.registros || []);
+  } catch(e) {
+    // silencioso — não bloqueia o registro principal
+  }
+}
+
+function renderRegistros(lista) {
+  const wrap = document.getElementById("registrosRecentes");
+  const el = document.getElementById("listaRegistros");
+
+  if (!lista.length) { wrap.style.display = "none"; return; }
+  wrap.style.display = "block";
+
+  el.innerHTML = lista.map(r => `
+    <div class="registro-item">
+      <div class="reg-info">
+        <span class="reg-tipo">${r.tipo}</span> — ${r.data} às ${r.hora}
+        ${r.ajustado ? '<span class="reg-ajustado">ajustado p/ ' + r.horaEfetiva + '</span>' : ''}
+      </div>
+      <button class="btn-ajuste" onclick='abrirModalAjuste(${JSON.stringify(r)})'>Pedir ajuste</button>
+    </div>
+  `).join("");
+}
+
+function abrirModalAjuste(registro) {
+  registroSelecionado = registro;
+  document.getElementById("modalOriginal").textContent =
+    `Registro original: ${registro.tipo} — ${registro.data} às ${registro.hora}`;
+
+  const [d, m, y] = registro.data.split("/");
+  document.getElementById("ajusteData").value = `${y}-${m}-${d}`;
+  document.getElementById("ajusteHora").value = registro.hora.slice(0,5);
+  document.getElementById("ajusteMotivo").value = "";
+  document.getElementById("modalAjuste").classList.add("aberto");
+}
+
+function fecharModalAjuste() {
+  document.getElementById("modalAjuste").classList.remove("aberto");
+  registroSelecionado = null;
+}
+
+async function enviarAjuste() {
+  if (!registroSelecionado) return;
+
+  const novaData = document.getElementById("ajusteData").value;
+  const novaHora = document.getElementById("ajusteHora").value;
+  const motivo = document.getElementById("ajusteMotivo").value.trim();
+
+  if (!novaData || !novaHora) { alert("Preencha data e hora."); return; }
+  if (!motivo) { alert("Preencha o motivo do ajuste."); return; }
+
+  const [y, m, d] = novaData.split("-");
+  const dataFormatada = `${d}/${m}/${y}`;
+  const horaFormatada = novaHora + ":00";
+
+  try {
+    await fetch(SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "pedirAjuste",
+        registroId: registroSelecionado.id,
+        funcionario: nomeFuncionario,
+        dataOriginal: registroSelecionado.data,
+        horaOriginal: registroSelecionado.hora,
+        dataSolicitada: dataFormatada,
+        horaSolicitada: horaFormatada,
+        motivo
+      })
+    });
+
+    fecharModalAjuste();
+    mostrarStatus("ok", "✓ Pedido de ajuste enviado. Aguardando aprovação.");
+  } catch(e) {
+    alert("Erro ao enviar pedido. Tente novamente.");
+  }
+}
+
+carregarUltimosRegistros();
 </script>
 </body>
 </html>
