@@ -393,6 +393,11 @@ async function enviarAjuste() {
   if (!novaData || !novaHora) { alert("Preencha data e hora."); return; }
   if (!motivo) { alert("Preencha o motivo do ajuste."); return; }
 
+  const btnEnviar = document.querySelector("#modalAjuste .modal-confirmar");
+  if (btnEnviar.disabled) return; // já está enviando, ignora clique repetido
+  btnEnviar.disabled = true;
+  btnEnviar.textContent = "Enviando...";
+
   const [y, m, d] = novaData.split("-");
   const dataFormatada = `${d}/${m}/${y}`;
   const horaFormatada = novaHora + ":00";
@@ -419,6 +424,9 @@ async function enviarAjuste() {
   } catch(e) {
     alert("Erro ao enviar pedido. Tente novamente.");
   }
+
+  btnEnviar.disabled = false;
+  btnEnviar.textContent = "Enviar pedido";
 }
 
 carregarUltimosRegistros();

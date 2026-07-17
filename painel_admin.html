@@ -764,6 +764,10 @@ function limparFiltroPainel() {
 
 function formatarDataPainel(val) {
   if (!val || val === "-") return "-";
+  // O backend do painel já manda a data pronta em DD/MM/YYYY — usar direto,
+  // sem reinterpretar. new Date("06/07/2026") seria lido como mês/dia (padrão
+  // americano) e viraria 07/06 por engano.
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(val)) return val;
   const d = new Date(val);
   if (!isNaN(d.getTime())) {
     return String(d.getDate()).padStart(2,"0") + "/" +
@@ -775,6 +779,8 @@ function formatarDataPainel(val) {
 
 function formatarHoraPainel(val) {
   if (!val || val === "-") return "-";
+  // Já vem pronto como "HH:MM:SS" do backend — usar direto.
+  if (/^\d{2}:\d{2}:\d{2}$/.test(val)) return val;
   const d = new Date(val);
   if (!isNaN(d.getTime())) {
     return String(d.getHours()).padStart(2,"0") + ":" +
