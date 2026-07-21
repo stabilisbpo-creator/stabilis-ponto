@@ -206,9 +206,13 @@ input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
   font-size: 11px; font-weight: 600; color: var(--gray-600);
   text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
 }
-.bh-tabela-wrap tbody tr { border-bottom: 1px solid var(--gray-100); transition: background 0.1s; }
+.bh-tabela-wrap tbody tr { border-bottom: 1px solid var(--gray-200); transition: background 0.1s; }
 .bh-tabela-wrap tbody tr:last-child { border-bottom: none; }
-.bh-tabela-wrap tbody tr:hover { background: var(--gray-50); }
+.bh-tabela-wrap tbody tr:hover { background: #e8eef5; }
+.bh-tabela-wrap tbody tr.bh-dia-par { background: #f7fafc; }
+.bh-tabela-wrap tbody tr.bh-dia-par:hover { background: #e8eef5; }
+.bh-tabela-wrap tbody td { border-right: 1px solid var(--gray-100); }
+.bh-tabela-wrap tbody td:last-child { border-right: none; }
 .bh-tabela-wrap tbody td { padding: 10px 16px; color: var(--gray-800); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .bh-td-data  { font-weight: 600; color: var(--navy); }
@@ -1057,10 +1061,11 @@ function renderizarPainel(data) {
   conteudo.innerHTML = data.funcionarios.map((func, idx) => {
     const saldoClass = func.saldoTotal > 0 ? "positivo" : func.saldoTotal < 0 ? "negativo" : "neutro";
 
-    const linhas = func.dias.map(dia => {
+    const linhas = func.dias.map((dia, diaIdx) => {
       const sc = dia.saldo > 0 ? "bh-saldo-pos" : dia.saldo < 0 ? "bh-saldo-neg" : "bh-saldo-zero";
       const dataFmt = formatarDataPainel(dia.data);
       const npares = dia.pares ? dia.pares.length : 0;
+      const classeDia = diaIdx % 2 === 1 ? "bh-dia-par" : "";
 
       const statusDia = dia.abonado
         ? `<div class="bh-badge-abonado" title="${dia.motivoAbono || ''}">🗓 abonado</div>`
@@ -1073,7 +1078,7 @@ function renderizarPainel(data) {
 
       if (dia.abonado && (!dia.pares || dia.pares.length === 0)) {
         return `
-          <tr>
+          <tr class="${classeDia}">
             <td class="bh-td-data">${dataFmt}</td>
             <td class="bh-td-dia">${dia.diaSemana}</td>
             <td class="bh-td-hora" colspan="2" style="text-align:center;color:var(--gray-400);">sem marcação — abonado</td>
@@ -1086,7 +1091,7 @@ function renderizarPainel(data) {
       return (dia.pares || []).map((par, idx2) => {
         const isFirst = idx2 === 0;
         return `
-          <tr>
+          <tr class="${classeDia}">
             ${isFirst
               ? `<td class="bh-td-data" rowspan="${npares}">${dataFmt}</td>
                  <td class="bh-td-dia" rowspan="${npares}">${dia.diaSemana}</td>`
