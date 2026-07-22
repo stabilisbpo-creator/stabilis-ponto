@@ -206,12 +206,12 @@ input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
   font-size: 11px; font-weight: 600; color: var(--gray-600);
   text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
 }
-.bh-tabela-wrap tbody tr { border-bottom: 1px solid var(--gray-200); transition: background 0.1s; }
+.bh-tabela-wrap tbody tr { border-bottom: 2px solid var(--gray-400); transition: background 0.1s; }
 .bh-tabela-wrap tbody tr:last-child { border-bottom: none; }
-.bh-tabela-wrap tbody tr:hover { background: #e8eef5; }
-.bh-tabela-wrap tbody tr.bh-dia-par { background: #f7fafc; }
-.bh-tabela-wrap tbody tr.bh-dia-par:hover { background: #e8eef5; }
-.bh-tabela-wrap tbody td { border-right: 1px solid var(--gray-100); }
+.bh-tabela-wrap tbody tr:hover { background: #dce6f2; }
+.bh-tabela-wrap tbody tr.bh-dia-par { background: #eef2f7; }
+.bh-tabela-wrap tbody tr.bh-dia-par:hover { background: #dce6f2; }
+.bh-tabela-wrap tbody td { border-right: 1px solid var(--gray-200); }
 .bh-tabela-wrap tbody td:last-child { border-right: none; }
 .bh-tabela-wrap tbody td { padding: 10px 16px; color: var(--gray-800); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -467,8 +467,45 @@ input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
         <p style="font-size:13px;color:#718096;margin-bottom:1rem;">
           Últimos pedidos já aprovados ou rejeitados.
         </p>
+        <div style="display:flex;gap:8px;align-items:end;margin-bottom:1rem;flex-wrap:wrap;">
+          <div class="field" style="max-width:180px;">
+            <label>Buscar por data</label>
+            <input type="date" id="histAjusteData">
+          </div>
+          <button class="btn btn-sm" onclick="filtrarHistoricoAjustes()" style="background:#ebf8ff;color:#2b6cb0;border:1px solid #bee3f8;">Buscar</button>
+          <button class="btn btn-sm btn-danger" onclick="limparFiltroHistoricoAjustes()">Limpar</button>
+        </div>
         <div id="listaHistorico">
           <p style="color:#a0aec0;font-size:13px;text-align:center;padding:1rem;">Carregando histórico...</p>
+        </div>
+        <div id="btnMaisHistorico" style="display:none;text-align:center;margin-top:0.5rem;">
+          <button class="btn btn-sm" onclick="carregarMaisHistoricoAjustes()" style="background:var(--gray-50);color:var(--gray-600);border:1px solid var(--gray-200);">
+            Carregar mais
+          </button>
+        </div>
+      </div>
+
+      <!-- HISTÓRICO DE ABONOS -->
+      <div class="card">
+        <h2><i class="ti ti-calendar-check"></i> Histórico de Abonos</h2>
+        <p style="font-size:13px;color:#718096;margin-bottom:1rem;">
+          Últimas ausências e períodos abonados.
+        </p>
+        <div style="display:flex;gap:8px;align-items:end;margin-bottom:1rem;flex-wrap:wrap;">
+          <div class="field" style="max-width:180px;">
+            <label>Buscar por data</label>
+            <input type="date" id="histAbonoData">
+          </div>
+          <button class="btn btn-sm" onclick="filtrarAbonosHistorico()" style="background:#ebf8ff;color:#2b6cb0;border:1px solid #bee3f8;">Buscar</button>
+          <button class="btn btn-sm btn-danger" onclick="limparFiltroAbonosHistorico()">Limpar</button>
+        </div>
+        <div id="listaAbonosHistorico">
+          <p style="color:#a0aec0;font-size:13px;text-align:center;padding:1rem;">Carregando abonos...</p>
+        </div>
+        <div id="btnMaisAbonos" style="display:none;text-align:center;margin-top:0.5rem;">
+          <button class="btn btn-sm" onclick="carregarMaisAbonosHistorico()" style="background:var(--gray-50);color:var(--gray-600);border:1px solid var(--gray-200);">
+            Carregar mais
+          </button>
         </div>
       </div>
 
@@ -577,6 +614,7 @@ function liberarAcesso() {
   carregarFeriados();
   carregarAjustes();
   carregarHistorico();
+  carregarAbonosHistorico();
 }
 
 if (sessionStorage.getItem(CHAVE_SESSAO) === "1") {
@@ -603,7 +641,7 @@ function mudarTab(nome) {
 // =============================================
 // ABA ADMINISTRAÇÃO — backend de configurações/feriados/ajustes
 // =============================================
-const SCRIPT_URL_ADMIN = "https://script.google.com/macros/s/AKfycbwGcZ0i6rU_MQ-T_SljzmImg1SX4LC7w6NkLqrKMmxhXq6vXKibY5l_Hu0LmEHE3e68MA/exec";
+const SCRIPT_URL_ADMIN = "https://script.google.com/macros/s/AKfycbzUUeE5J1HpJ-_bno_uBngPfd4WCnZYd0pLcSGx1_BM77ghtqrJz_PG0o-5y47X52jWuA/exec";
 
 let faixas = [
   { limiteMinutos: 120, percentual: 50 },
@@ -802,6 +840,84 @@ function mostrarMsg(id, tipo, texto) {
 }
 
 // PEDIDOS DE AJUSTE
+// HISTÓRICO DE ABONOS
+let abonosTodos = [];
+let abonosPagina = 5;
+let abonosFiltro = "";
+
+async function carregarAbonosHistorico() {
+  try {
+    const r = await fetch(SCRIPT_URL_ADMIN + "?action=abonos");
+    const data = await r.json();
+    abonosTodos = data.abonos || [];
+    abonosPagina = 5;
+    abonosFiltro = "";
+    document.getElementById("histAbonoData").value = "";
+    renderAbonosHistorico();
+  } catch(e) {
+    document.getElementById("listaAbonosHistorico").innerHTML =
+      '<p style="color:#fc8181;font-size:13px;text-align:center;padding:1rem;">Erro ao carregar abonos.</p>';
+  }
+}
+
+function filtrarAbonosHistorico() {
+  const valor = document.getElementById("histAbonoData").value;
+  if (valor) {
+    const [y, m, d] = valor.split("-");
+    abonosFiltro = `${d}/${m}/${y}`;
+  } else {
+    abonosFiltro = "";
+  }
+  abonosPagina = 5;
+  renderAbonosHistorico();
+}
+
+function limparFiltroAbonosHistorico() {
+  document.getElementById("histAbonoData").value = "";
+  abonosFiltro = "";
+  abonosPagina = 5;
+  renderAbonosHistorico();
+}
+
+function carregarMaisAbonosHistorico() {
+  abonosPagina += 5;
+  renderAbonosHistorico();
+}
+
+function renderAbonosHistorico() {
+  const el = document.getElementById("listaAbonosHistorico");
+  const btnWrap = document.getElementById("btnMaisAbonos");
+
+  let lista = abonosTodos;
+  if (abonosFiltro) {
+    lista = lista.filter(a => a.data === abonosFiltro);
+  }
+
+  if (!lista.length) {
+    el.innerHTML = '<p style="color:#a0aec0;font-size:13px;text-align:center;padding:1rem;">Nenhum abono encontrado.</p>';
+    btnWrap.style.display = "none";
+    return;
+  }
+
+  const visiveis = lista.slice(0, abonosPagina);
+
+  el.innerHTML = visiveis.map(a => {
+    const label = a.tipo === "preenchido" ? "Preenchido" : "Sem marcação";
+    const detalhe = a.tipo === "preenchido"
+      ? `Horário abonado: ${a.horaInicio || "-"} às ${a.horaFim || "-"}`
+      : `Dia inteiro sem marcação — não contou contra o saldo`;
+    return `
+    <div class="ajuste-item" style="opacity:0.9;">
+      <div class="ajuste-func"><i class="ti ti-user"></i> ${a.funcionario} <span class="badge badge-facultativo" style="margin-left:8px;">${label}</span></div>
+      <div class="ajuste-horarios">${a.data} — ${detalhe}</div>
+      <div class="ajuste-motivo">"${a.motivo}"</div>
+      <div class="ajuste-data-pedido">Registrado por ${a.registradoPor || "—"} em ${a.dataRegistro}</div>
+    </div>`;
+  }).join("");
+
+  btnWrap.style.display = lista.length > abonosPagina ? "block" : "none";
+}
+
 // =============================================
 // ABONAR AUSÊNCIA / PERÍODO
 // =============================================
@@ -856,6 +972,7 @@ async function enviarAbono() {
     document.getElementById("abo_funcionario").value = "";
     document.getElementById("abo_data").value = "";
     document.getElementById("abo_motivo").value = "";
+    setTimeout(carregarAbonosHistorico, 1000);
   } catch(e) {
     mostrarMsg("msgAbono", "erro", "Erro ao registrar. Tente novamente.");
   }
@@ -928,25 +1045,68 @@ async function responderAjuste(id, aprovado, btn) {
 }
 
 // HISTÓRICO DE AJUSTES
+// HISTÓRICO DE AJUSTES — carrega tudo uma vez, pagina/filtra no navegador
+let historicoAjustesTodos = [];
+let historicoAjustesPagina = 5;
+let historicoAjustesFiltro = "";
+
 async function carregarHistorico() {
   try {
     const r = await fetch(SCRIPT_URL_ADMIN + "?action=historicoAjustes");
     const data = await r.json();
-    renderHistorico(data.historico || []);
+    historicoAjustesTodos = data.historico || [];
+    historicoAjustesPagina = 5;
+    historicoAjustesFiltro = "";
+    document.getElementById("histAjusteData").value = "";
+    renderHistorico();
   } catch(e) {
     document.getElementById("listaHistorico").innerHTML =
       '<p style="color:#fc8181;font-size:13px;text-align:center;padding:1rem;">Erro ao carregar histórico.</p>';
   }
 }
 
-function renderHistorico(lista) {
+function filtrarHistoricoAjustes() {
+  const valor = document.getElementById("histAjusteData").value;
+  if (valor) {
+    const [y, m, d] = valor.split("-");
+    historicoAjustesFiltro = `${d}/${m}/${y}`;
+  } else {
+    historicoAjustesFiltro = "";
+  }
+  historicoAjustesPagina = 5;
+  renderHistorico();
+}
+
+function limparFiltroHistoricoAjustes() {
+  document.getElementById("histAjusteData").value = "";
+  historicoAjustesFiltro = "";
+  historicoAjustesPagina = 5;
+  renderHistorico();
+}
+
+function carregarMaisHistoricoAjustes() {
+  historicoAjustesPagina += 5;
+  renderHistorico();
+}
+
+function renderHistorico() {
   const el = document.getElementById("listaHistorico");
+  const btnWrap = document.getElementById("btnMaisHistorico");
+
+  let lista = historicoAjustesTodos;
+  if (historicoAjustesFiltro) {
+    lista = lista.filter(a => a.dataSolicitada === historicoAjustesFiltro || a.dataOriginal === historicoAjustesFiltro);
+  }
+
   if (!lista.length) {
-    el.innerHTML = '<p style="color:#a0aec0;font-size:13px;text-align:center;padding:1rem;">Nenhum ajuste respondido ainda.</p>';
+    el.innerHTML = '<p style="color:#a0aec0;font-size:13px;text-align:center;padding:1rem;">Nenhum ajuste encontrado.</p>';
+    btnWrap.style.display = "none";
     return;
   }
 
-  el.innerHTML = lista.map(a => {
+  const visiveis = lista.slice(0, historicoAjustesPagina);
+
+  el.innerHTML = visiveis.map(a => {
     const aprovado = a.status === "Aprovado";
     const corBadge = aprovado ? "badge-folga" : "badge-feriado";
     return `
@@ -961,6 +1121,8 @@ function renderHistorico(lista) {
       <div class="ajuste-data-pedido">Respondido por ${a.aprovadoPor || "—"} em ${a.dataResposta}</div>
     </div>`;
   }).join("");
+
+  btnWrap.style.display = lista.length > historicoAjustesPagina ? "block" : "none";
 }
 
 // =============================================
@@ -1081,7 +1243,7 @@ function renderizarPainel(data) {
           <tr class="${classeDia}">
             <td class="bh-td-data">${dataFmt}</td>
             <td class="bh-td-dia">${dia.diaSemana}</td>
-            <td class="bh-td-hora" colspan="2" style="text-align:center;color:var(--gray-400);">sem marcação — abonado</td>
+            <td class="bh-td-hora" colspan="4" style="text-align:center;color:var(--gray-400);">sem marcação — abonado</td>
             <td class="bh-td-horas">00h00m</td>
             <td class="bh-td-horas">00h00m</td>
             <td><span class="bh-saldo-zero">+00h00m</span>${statusDia}</td>
@@ -1090,14 +1252,18 @@ function renderizarPainel(data) {
 
       return (dia.pares || []).map((par, idx2) => {
         const isFirst = idx2 === 0;
+        const entradaAjustada = par.abonado ? '<div class="bh-hora-real" style="color:var(--gold);">abonado</div>' : '';
+        const saidaAjustada = par.abonado ? '<div class="bh-hora-real" style="color:var(--gold);">abonado</div>' : '';
         return `
           <tr class="${classeDia}">
             ${isFirst
               ? `<td class="bh-td-data" rowspan="${npares}">${dataFmt}</td>
                  <td class="bh-td-dia" rowspan="${npares}">${dia.diaSemana}</td>`
               : ""}
-            <td class="bh-td-hora">${celulaHoraPainel(par.entrada, par.entradaReal)}</td>
-            <td class="bh-td-hora">${celulaHoraPainel(par.saida, par.saidaReal)}${par.abonado ? '<div class="bh-hora-real" style="color:var(--gold);">abonado</div>' : ''}</td>
+            <td class="bh-td-hora">${par.entradaReal || "-"}</td>
+            <td class="bh-td-hora">${par.entrada || "-"}${entradaAjustada}</td>
+            <td class="bh-td-hora">${par.saidaReal || "-"}</td>
+            <td class="bh-td-hora">${par.saida || "-"}${saidaAjustada}</td>
             <td class="bh-td-horas">${minutosParaHoraPainel(par.trabalhado)}</td>
             ${isFirst
               ? `<td class="bh-td-horas" rowspan="${npares}">${minutosParaHoraPainel(dia.esperado)}</td>
@@ -1133,6 +1299,8 @@ function renderizarPainel(data) {
               <col class="col-dia">
               <col class="col-hora">
               <col class="col-hora">
+              <col class="col-hora">
+              <col class="col-hora">
               <col class="col-horas">
               <col class="col-horas">
               <col class="col-saldo">
@@ -1141,8 +1309,10 @@ function renderizarPainel(data) {
               <tr>
                 <th>Data</th>
                 <th>Dia</th>
-                <th>Entrada</th>
-                <th>Saída</th>
+                <th>Entrada batida</th>
+                <th>Entrada ajustada</th>
+                <th>Saída batida</th>
+                <th>Saída ajustada</th>
                 <th>Trabalhado</th>
                 <th>Esperado</th>
                 <th>Saldo do Dia</th>
