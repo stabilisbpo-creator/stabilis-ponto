@@ -329,10 +329,6 @@ input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
           </div>
         </div>
         <div class="grid2">
-          <div class="field">
-            <label>Intervalo (minutos)</label>
-            <input type="number" id="cfg_intervalo" value="90" min="0" max="240">
-          </div>
           <div class="toggle-row">
             <input type="checkbox" id="cfg_sextaDiferente" checked>
             <label for="cfg_sextaDiferente">Sexta-feira tem horário diferente</label>
@@ -651,7 +647,7 @@ function mudarTab(nome) {
 // =============================================
 // ABA ADMINISTRAÇÃO — backend de configurações/feriados/ajustes
 // =============================================
-const SCRIPT_URL_ADMIN = "https://script.google.com/macros/s/AKfycbyKH_uB7jMTINsI_KGZ-e4xoZn0m0cKsP_x5JZzHkt4RmZzCR9pN2E2aXIDsQWIdQp4aQ/exec";
+const SCRIPT_URL_ADMIN = "https://script.google.com/macros/s/AKfycbwiro0pzm8UN97D94AAKsKMXVF1tB0K7q9Zi9hOQ2egqAcyBKi4JpPWpJSDazDRVqs5yw/exec";
 
 let faixas = [
   { limiteMinutos: 120, percentual: 50 },
@@ -703,7 +699,6 @@ async function carregarConfiguracoes() {
     document.getElementById("cfg_entrada").value = cfg.entrada || "08:00";
     document.getElementById("cfg_saidaPadrao").value = cfg.saidaPadrao || "18:00";
     document.getElementById("cfg_saidaSexta").value = cfg.saidaSexta || "17:30";
-    document.getElementById("cfg_intervalo").value = cfg.intervalo || 90;
     document.getElementById("cfg_sextaDiferente").checked = cfg.sextaDiferente !== false;
     document.getElementById("cfg_percFeriado").value = cfg.percentualFeriado || 100;
     document.getElementById("cfg_usaNoturno").checked = cfg.usaAdicionalNoturno || false;
@@ -732,7 +727,6 @@ async function salvarConfiguracoes() {
     saidaPadrao: document.getElementById("cfg_saidaPadrao").value,
     saidaSexta: document.getElementById("cfg_saidaSexta").value,
     sextaDiferente: document.getElementById("cfg_sextaDiferente").checked,
-    intervalo: parseInt(document.getElementById("cfg_intervalo").value),
     faixasExtras: faixas,
     percentualFeriado: parseInt(document.getElementById("cfg_percFeriado").value),
     usaAdicionalNoturno: document.getElementById("cfg_usaNoturno").checked,
