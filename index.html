@@ -138,7 +138,7 @@
 // =============================================
 // CONFIGURAÇÃO — atualize após reimplantar
 // =============================================
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzUUeE5J1HpJ-_bno_uBngPfd4WCnZYd0pLcSGx1_BM77ghtqrJz_PG0o-5y47X52jWuA/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyKH_uB7jMTINsI_KGZ-e4xoZn0m0cKsP_x5JZzHkt4RmZzCR9pN2E2aXIDsQWIdQp4aQ/exec";
 
 // Nome da empresa (aparece no cabeçalho)
 const NOME_EMPRESA = "Stabilis BPO";
@@ -291,6 +291,26 @@ async function registrar() {
   if (!tipoSelecionado) { mostrarStatus("erro", "Selecione o tipo de registro."); return; }
 
   btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader"></i> Verificando...';
+
+  // Confere com o servidor, na hora do clique, se esse ainda é o tipo esperado.
+  // Evita duplicar Entrada/Saída quando a pessoa usa mais de um dispositivo
+  // ou deixa a aba aberta de um dia pro outro sem recarregar.
+  try {
+    const r = await fetch(SCRIPT_URL + "?action=ultimoRegistro&funcionario=" + encodeURIComponent(nomeFuncionario));
+    const check = await r.json();
+    if (check.proximoTipo && check.proximoTipo !== tipoSelecionado) {
+      aplicarEstado(check.proximoTipo, check.ultimaData);
+      if (check.ultimoTipo) salvarEstadoLocal(check.ultimoTipo, check.ultimaData);
+      mostrarStatus("erro", `Seu último registro já foi atualizado — a tela foi corrigida. Confira e tente de novo.`);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ti ti-check"></i> Registrar ponto';
+      return;
+    }
+  } catch(e) {
+    // se a checagem falhar, segue com o valor local mesmo (não bloqueia o funcionário)
+  }
+
   btn.innerHTML = '<i class="ti ti-loader"></i> Enviando...';
 
   const agora = new Date();
