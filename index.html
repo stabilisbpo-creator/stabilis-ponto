@@ -335,7 +335,11 @@ async function registrar() {
     const proximoTipo = tipoEnviado === "Entrada" ? "Saída" : "Entrada";
     aplicarEstado(proximoTipo, dataHora.data);
 
-    mostrarStatus("ok", "✓ Ponto registrado com sucesso às " + dataHora.hora);
+    if (tipoEnviado === "Saída") {
+      await mostrarStatusComSaldoDoDia(dataHora);
+    } else {
+      mostrarStatus("ok", "✓ Ponto registrado com sucesso às " + dataHora.hora);
+    }
     setTimeout(carregarUltimosRegistros, 800);
 
   } catch(e) {
@@ -350,6 +354,35 @@ function mostrarStatus(tipo, texto) {
   const msg = document.getElementById("statusMsg");
   msg.className = "status-msg " + tipo;
   msg.textContent = texto;
+}
+
+// Busca o saldo só do dia de hoje (não o acumulado) e mostra junto da confirmação.
+async function mostrarStatusComSaldoDoDia(dataHora) {
+  const hojeISO = dataHora.data.split("/").reverse().join("-"); // dd/mm/yyyy -> yyyy-mm-dd
+  try {
+    const r = await fetch(SCRIPT_URL + "?action=dadosPainel&dataInicio=" + hojeISO + "&dataFim=" + hojeISO);
+    const dadosDia = await r.json();
+    const meuFunc = (dadosDia.funcionarios || []).find(f => f.nome === nomeFuncionario);
+    const diaHoje = meuFunc ? meuFunc.dias.find(d => d.data === dataHora.data) : null;
+
+    if (diaHoje) {
+      mostrarStatus("ok", `✓ Ponto registrado às ${dataHora.hora} — ${formatarSaldoMensagem(diaHoje.saldo)}`);
+    } else {
+      mostrarStatus("ok", "✓ Ponto registrado com sucesso às " + dataHora.hora);
+    }
+  } catch(e) {
+    mostrarStatus("ok", "✓ Ponto registrado com sucesso às " + dataHora.hora);
+  }
+}
+
+function formatarSaldoMensagem(min) {
+  if (!min) return "seu saldo hoje bateu certinho";
+  const sinal = min > 0 ? "a mais" : "a menos";
+  const abs = Math.abs(min);
+  const h = Math.floor(abs / 60);
+  const m = abs % 60;
+  const texto = h > 0 ? `${h}h${String(m).padStart(2,"0")}m` : `${m}m`;
+  return `seu saldo hoje foi ${texto} ${sinal}`;
 }
 
 // =============================================

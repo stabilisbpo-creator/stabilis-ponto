@@ -598,33 +598,49 @@ input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
 // =============================================
 // SENHA — protege o acesso a esta página
 // (proteção simples client-side; impede acesso casual de quem tem o link)
+// Dois níveis: admin (tudo) e leitura (só Banco de Horas, sem aprovar nada)
 // =============================================
-const SENHA_ACESSO = "Maria@Rebeca";
+const SENHA_ADMIN = "Maria@Rebeca";
+const SENHA_LEITURA = "Camila@DP2026";
 const CHAVE_SESSAO = "ponto_admin_autenticado";
+const CHAVE_NIVEL = "ponto_admin_nivel";
 
 function verificarSenha() {
   const input = document.getElementById("gateSenha").value;
-  if (input === SENHA_ACESSO) {
+  if (input === SENHA_ADMIN) {
     sessionStorage.setItem(CHAVE_SESSAO, "1");
-    liberarAcesso();
+    sessionStorage.setItem(CHAVE_NIVEL, "admin");
+    liberarAcesso("admin");
+  } else if (input === SENHA_LEITURA) {
+    sessionStorage.setItem(CHAVE_SESSAO, "1");
+    sessionStorage.setItem(CHAVE_NIVEL, "leitura");
+    liberarAcesso("leitura");
   } else {
     document.getElementById("gateErro").classList.add("visivel");
   }
 }
 
-function liberarAcesso() {
+function liberarAcesso(nivel) {
   document.getElementById("gateOverlay").style.display = "none";
   document.getElementById("appShell").classList.add("visivel");
-  // Carrega os dados da aba visível na primeira vez
-  carregarConfiguracoes();
-  carregarFeriados();
-  carregarAjustes();
-  carregarHistorico();
-  carregarAbonosHistorico();
+
+  if (nivel === "leitura") {
+    // Só Banco de Horas — sem aba de Administração, sem aprovar/rejeitar nada
+    document.getElementById("tabBtnAdmin").style.display = "none";
+    mudarTab("painel");
+  } else {
+    // Carrega os dados da aba visível na primeira vez
+    carregarConfiguracoes();
+    carregarFeriados();
+    carregarAjustes();
+    carregarHistorico();
+    carregarAbonosHistorico();
+  }
 }
 
-if (sessionStorage.getItem(CHAVE_SESSAO) === "1") {
-  liberarAcesso();
+const nivelSalvo = sessionStorage.getItem(CHAVE_NIVEL);
+if (sessionStorage.getItem(CHAVE_SESSAO) === "1" && nivelSalvo) {
+  liberarAcesso(nivelSalvo);
 }
 
 // =============================================
