@@ -631,10 +631,10 @@ function liberarAcesso(nivel) {
   } else {
     // Carrega os dados da aba visível na primeira vez
     carregarConfiguracoes();
-    carregarFeriados();
-    carregarAjustes();
-    carregarHistorico();
-    carregarAbonosHistorico();
+    setTimeout(carregarFeriados, 200);
+    setTimeout(carregarAjustes, 400);
+    setTimeout(carregarHistorico, 600);
+    setTimeout(carregarAbonosHistorico, 800);
   }
 }
 
@@ -865,7 +865,8 @@ let abonosTodos = [];
 let abonosPagina = 5;
 let abonosFiltro = "";
 
-async function carregarAbonosHistorico() {
+async function carregarAbonosHistorico(tentativa) {
+  tentativa = tentativa || 1;
   try {
     const r = await fetch(SCRIPT_URL_ADMIN + "?action=abonos");
     const data = await r.json();
@@ -875,8 +876,12 @@ async function carregarAbonosHistorico() {
     document.getElementById("histAbonoData").value = "";
     renderAbonosHistorico();
   } catch(e) {
-    document.getElementById("listaAbonosHistorico").innerHTML =
-      '<p style="color:#fc8181;font-size:13px;text-align:center;padding:1rem;">Erro ao carregar abonos.</p>';
+    if (tentativa < 2) {
+      setTimeout(() => carregarAbonosHistorico(tentativa + 1), 1500);
+    } else {
+      document.getElementById("listaAbonosHistorico").innerHTML =
+        '<p style="color:#fc8181;font-size:13px;text-align:center;padding:1rem;">Erro ao carregar abonos. <a href="javascript:void(0)" onclick="carregarAbonosHistorico()" style="color:#2b6cb0;font-weight:600;">Tentar de novo</a></p>';
+    }
   }
 }
 
@@ -1009,14 +1014,19 @@ async function enviarAbono() {
   }
 }
 
-async function carregarAjustes() {
+async function carregarAjustes(tentativa) {
+  tentativa = tentativa || 1;
   try {
     const r = await fetch(SCRIPT_URL_ADMIN + "?action=ajustesPendentes");
     const data = await r.json();
     renderAjustes(data.ajustes || []);
   } catch(e) {
-    document.getElementById("listaAjustes").innerHTML =
-      '<p style="color:#fc8181;font-size:13px;text-align:center;padding:1rem;">Erro ao carregar pedidos.</p>';
+    if (tentativa < 2) {
+      setTimeout(() => carregarAjustes(tentativa + 1), 1500);
+    } else {
+      document.getElementById("listaAjustes").innerHTML =
+        '<p style="color:#fc8181;font-size:13px;text-align:center;padding:1rem;">Erro ao carregar pedidos. <a href="javascript:void(0)" onclick="carregarAjustes()" style="color:#2b6cb0;font-weight:600;">Tentar de novo</a></p>';
+    }
   }
 }
 
@@ -1081,7 +1091,8 @@ let historicoAjustesTodos = [];
 let historicoAjustesPagina = 5;
 let historicoAjustesFiltro = "";
 
-async function carregarHistorico() {
+async function carregarHistorico(tentativa) {
+  tentativa = tentativa || 1;
   try {
     const r = await fetch(SCRIPT_URL_ADMIN + "?action=historicoAjustes");
     const data = await r.json();
@@ -1091,8 +1102,12 @@ async function carregarHistorico() {
     document.getElementById("histAjusteData").value = "";
     renderHistorico();
   } catch(e) {
-    document.getElementById("listaHistorico").innerHTML =
-      '<p style="color:#fc8181;font-size:13px;text-align:center;padding:1rem;">Erro ao carregar histórico.</p>';
+    if (tentativa < 2) {
+      setTimeout(() => carregarHistorico(tentativa + 1), 1500);
+    } else {
+      document.getElementById("listaHistorico").innerHTML =
+        '<p style="color:#fc8181;font-size:13px;text-align:center;padding:1rem;">Erro ao carregar histórico. <a href="javascript:void(0)" onclick="carregarHistorico()" style="color:#2b6cb0;font-weight:600;">Tentar de novo</a></p>';
+    }
   }
 }
 
